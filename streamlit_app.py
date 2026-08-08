@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import time
 import random
+import json
 from collections import defaultdict
 
 # =====================================================
@@ -159,6 +160,7 @@ tab_labels = [
     "GIS & Site",
     "Cost",
     "Massing",
+    "Export Suite",
     "Full Sim",
     "RL City",
     "City Learning",
@@ -267,6 +269,52 @@ elif active_tab == "Massing":
     })
     st.dataframe(df_mass)
 
+elif active_tab == "Export Suite":
+    st.header("BIM & CAD Export Suite")
+    st.write("Export your generated building concepts, structural grids, and project statistics into standard industry formats.")
+    
+    if "generated" in st.session_state:
+        concept_data = st.session_state.generated
+        
+        # JSON Export
+        json_str = json.dumps(concept_data, indent=2)
+        st.download_button(
+            label="Download Concept Data (.json)",
+            data=json_str,
+            file_name="studiohome_concept.json",
+            mime="application/json"
+        )
+        
+        # CSV Summary Report
+        df_export = pd.DataFrame({
+            "Parameter": ["Site Area", "Estimated Floors", "Grid Spacing", "Structural System", "Estimated Cost"],
+            "Value": [
+                st.session_state.site_area, 
+                concept_data.get("floors"), 
+                concept_data.get("grid_spacing"), 
+                concept_data.get("structural_system"), 
+                concept_data.get("estimated_cost")
+            ]
+        })
+        csv_data = df_export.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Download Summary Report (.csv)",
+            data=csv_data,
+            file_name="studiohome_summary.csv",
+            mime="text/csv"
+        )
+    else:
+        st.info("No active design concept found. Generate a concept in the 'AI Brain' panel first.")
+    
+    st.subheader("CAD Geometry Interoperability")
+    mock_dxf = "SECTION\n2\nHEADER\n0\nSECTION\n2\nENTITIES\n0\nLINE\n8\n0\n10\n0.0\n20\n0.0\n30\n0.0\n11\n10.0\n21\n10.0\n31\n0.0\n0\nENDSEC\n0\nEOF"
+    st.download_button(
+        label="Download CAD Geometry (.dxf)",
+        data=mock_dxf,
+        file_name="studiohome_model.dxf",
+        mime="application/dxf"
+    )
+
 elif active_tab == "Full Sim":
     st.header("Full Simulation Pipeline")
     if st.button("Run All Modules"):
@@ -334,4 +382,3 @@ elif active_tab == "Meta-Evo":
 
 # ---- FOOTER ----
 st.sidebar.caption(f"Active panel: {st.session_state.active_tab}")
-
