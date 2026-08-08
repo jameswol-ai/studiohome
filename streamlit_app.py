@@ -334,3 +334,4 @@ elif active_tab == "Meta-Evo":
 
 # ---- FOOTER ----
 st.sidebar.caption(f"Active panel: {st.session_state.active_tab}")
+
