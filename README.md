@@ -1,2 +1,2 @@
-# Studio 96
+# Studio Home
 Architecture Design Studio 
