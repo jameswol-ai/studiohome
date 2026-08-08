@@ -159,8 +159,8 @@ def random_3d_scatter():
 # =====================================================
 # APP CONFIG
 # =====================================================
-st.set_page_config(page_title="Studio 96", layout="wide")
-st.title("Studio 96")
+st.set_page_config(page_title="StudioHome", layout="wide")
+st.title("🏡 StudioHome")
 
 # ---- SIDEBAR PANEL SELECTION ----
 tab_labels = [
