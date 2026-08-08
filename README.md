@@ -1,2 +1,2 @@
 # Studio Home
-Architecture Design Studio 
+Architectural, Engineering and Construction Studio 
