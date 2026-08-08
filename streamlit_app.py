@@ -5,22 +5,6 @@ import time
 import random
 from collections import defaultdict
 
-# ---- SAFE IMPORTS (MATPLOTLIB & PLOTLY) ----
-try:
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    MATPLOTLIB_AVAILABLE = True
-except ImportError:
-    MATPLOTLIB_AVAILABLE = False
-
-try:
-    import plotly.express as px
-    import plotly.graph_objects as go
-    PLOTLY_AVAILABLE = True
-except ImportError:
-    PLOTLY_AVAILABLE = False
-
 # =====================================================
 # IMPROVED RL CITY ENGINE
 # =====================================================
@@ -123,46 +107,87 @@ if "active_tab" not in st.session_state:
     params = st.query_params
     st.session_state.active_tab = params.get("tab", "AI Brain")
 
-st.set_page_config(page_title="StudioHome", layout="wide")
-st.title("🏡 StudioHome")
+st.set_page_config(page_title="studiohome", layout="wide")
+
+# =====================================================
+# CUSTOM LOGO STYLING
+# =====================================================
+st.markdown("""
+    <style>
+    .custom-logo-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 2px solid #262730;
+        margin-bottom: 20px;
+    }
+    .custom-logo-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #FF4B4B, #FF8E53);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 18px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .custom-logo-text {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        background: linear-gradient(90deg, #FFFFFF, #A3A8B8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    </style>
+    <div class="custom-logo-container">
+        <div class="custom-logo-icon">SH</div>
+        <div class="custom-logo-text">studiohome</div>
+    </div>
+""", unsafe_allow_html=True)
 
 # ---- SIDEBAR PANEL SELECTION ----
 tab_labels = [
-    "🧠 AI Brain",
-    "🏛️ Architecture",
-    "🏗️ Structure",
-    "⚡ MEP",
-    "🌍 GIS & Site",
-    "💰 Cost",
-    "🎨 Render",
-    "🚀 Full Sim",
-    "🏙️ RL City",
-    "📈 City Learning",
-    "🤝 Diplomacy",
-    "⚔️ War",
-    "🎭 Culture",
-    "🌌 Consciousness",
-    "🧬 Meta‑Evo"
+    "AI Brain",
+    "Architecture",
+    "Structure",
+    "MEP",
+    "GIS & Site",
+    "Cost",
+    "Massing",
+    "Full Sim",
+    "RL City",
+    "City Learning",
+    "Diplomacy",
+    "War",
+    "Culture",
+    "Consciousness",
+    "Meta-Evo"
 ]
 
 if st.session_state.active_tab not in tab_labels:
     st.session_state.active_tab = tab_labels[0]
 
 with st.sidebar:
-    st.header("📋 Panels")
+    st.markdown("### Navigation Panels")
     active_tab = st.radio(
         "Select panel",
         tab_labels,
         index=tab_labels.index(st.session_state.active_tab),
-        key="tab_radio"
+        key="tab_radio",
+        label_visibility="collapsed"
     )
 st.session_state.active_tab = active_tab
 
 # =========================================================
 # PANEL CONTENT IMPLEMENTATION
 # =========================================================
-if active_tab == "🧠 AI Brain":
-    st.header("🧠 AI Design Brain")
+if active_tab == "AI Brain":
+    st.header("AI Design Brain")
     col1, col2 = st.columns([3, 1])
     with col1:
         st.session_state.intent_text = st.text_area(
@@ -187,30 +212,21 @@ if active_tab == "🧠 AI Brain":
                 "estimated_cost": floors * st.session_state.site_area * random.randint(800, 1200)
             }
             st.success(f"AI generated concept: {st.session_state.generated}")
-            st.balloons()
 
-elif active_tab == "🏛️ Architecture":
-    st.header("🏛️ Architecture Engine")
+elif active_tab == "Architecture":
+    st.header("Architecture Engine")
     col1, col2 = st.columns(2)
     with col1:
         grid_spacing = st.slider("Grid spacing (m)", 2.0, 10.0, 6.0)
     with col2:
         grid_extent = st.slider("Grid size (m)", 10, 60, 30)
-    if st.button("Show Gridlines"):
-        if MATPLOTLIB_AVAILABLE:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-            ax.set_xlim(0, grid_extent)
-            ax.set_ylim(0, grid_extent)
-            ax.set_xticks(np.arange(0, grid_extent + grid_spacing, grid_spacing))
-            ax.set_yticks(np.arange(0, grid_extent + grid_spacing, grid_spacing))
-            ax.grid(True, linestyle='--', alpha=0.7)
-            st.pyplot(fig)
-        else:
-            st.info("Matplotlib not installed – showing numerical grid")
+    if st.button("Show Grid Data"):
+        rows = int(grid_extent / grid_spacing)
+        grid_data = [[f"({i*grid_spacing:.0f},{j*grid_spacing:.0f})" for j in range(rows)] for i in range(rows)]
+        st.dataframe(grid_data[:10])
 
-elif active_tab == "🏗️ Structure":
-    st.header("🏗️ Structural Engine")
+elif active_tab == "Structure":
+    st.header("Structural Engine")
     elements = {
         "Columns": "Vertical load‑bearing members (concrete/steel)",
         "Beams": "Horizontal members spanning between columns",
@@ -220,9 +236,9 @@ elif active_tab == "🏗️ Structure":
     }
     st.table(elements.items())
 
-elif active_tab == "⚡ MEP":
-    st.header("⚡ MEP Systems")
-    mep_tab1, mep_tab2, mep_tab3 = st.tabs(["❄️ Mechanical", "💡 Electrical", "🚿 Plumbing"])
+elif active_tab == "MEP":
+    st.header("MEP Systems")
+    mep_tab1, mep_tab2, mep_tab3 = st.tabs(["Mechanical", "Electrical", "Plumbing"])
     with mep_tab1:
         st.metric("Cooling Load", f"{random.randint(80, 250)} kW")
     with mep_tab2:
@@ -230,41 +246,31 @@ elif active_tab == "⚡ MEP":
     with mep_tab3:
         st.metric("Daily Water", f"{random.randint(1000, 5000)} L")
 
-elif active_tab == "🌍 GIS & Site":
-    st.header("🌍 Terrain Analysis")
-    if MATPLOTLIB_AVAILABLE:
-        x = np.linspace(0, 10, 100)
-        fig, ax = plt.subplots()
-        ax.plot(x, np.sin(x))
-        st.pyplot(fig)
+elif active_tab == "GIS & Site":
+    st.header("Terrain Analysis")
+    x = np.linspace(0, 10, 100)
+    st.line_chart(np.column_stack([x, np.sin(x)]))
 
-elif active_tab == "💰 Cost":
-    st.header("💰 Cost Engine")
+elif active_tab == "Cost":
+    st.header("Cost Engine")
     area = st.number_input("Floor Area (m²)", value=500.0)
     cost = area * random.randint(400, 1200) if "generated" not in st.session_state else st.session_state.generated["estimated_cost"]
     st.metric("Estimated Cost", f"${cost:,.0f}")
     st.bar_chart({"Foundation": 15, "Structure": 30, "MEP": 25, "Finishes": 20, "Other": 10})
 
-elif active_tab == "🎨 Render":
-    st.header("🎨 Interactive 3D Massing Viewer")
-    if PLOTLY_AVAILABLE:
-        # Generate sample 3D building blocks
-        df_mass = pd.DataFrame({
-            "x": np.random.randint(0, 20, 60),
-            "y": np.random.randint(0, 20, 60),
-            "z": np.random.randint(1, 15, 60),
-            "floors": np.random.randint(2, 8, 60)
-        })
-        fig = px.scatter_3d(df_mass, x="x", y="y", z="z", color="floors", size="floors",
-                            title="StudioHome Generative 3D Massing Model")
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning("Plotly is required for interactive 3D rendering. Run `pip install plotly`.")
+elif active_tab == "Massing":
+    st.header("Spatial Massing Viewer")
+    df_mass = pd.DataFrame({
+        "x": np.random.randint(0, 20, 30),
+        "y": np.random.randint(0, 20, 30),
+        "height": np.random.randint(1, 15, 30)
+    })
+    st.dataframe(df_mass)
 
-elif active_tab == "🚀 Full Sim":
-    st.header("🚀 Full Simulation Pipeline")
+elif active_tab == "Full Sim":
+    st.header("Full Simulation Pipeline")
     if st.button("Run All Modules"):
-        steps = ["AI Design", "Architecture Grid", "Structural Physics", "MEP Sizing", "Cost Estimation", "3D Render Export"]
+        steps = ["AI Design", "Architecture Grid", "Structural Physics", "MEP Sizing", "Cost Estimation", "Export Pipeline"]
         p = st.progress(0)
         for i, s in enumerate(steps):
             st.write(f"Executing: {s}...")
@@ -272,8 +278,8 @@ elif active_tab == "🚀 Full Sim":
             p.progress((i+1)/len(steps))
         st.success("Simulation pipeline completed successfully!")
 
-elif active_tab == "🏙️ RL City":
-    st.header("🏙️ Reinforcement Learning City Engine")
+elif active_tab == "RL City":
+    st.header("Reinforcement Learning City Engine")
     rl = st.session_state.rl_engine
     if st.button("Run City Step"):
         buildings, _, _, failed, stability, reward = rl.step()
@@ -283,36 +289,36 @@ elif active_tab == "🏙️ RL City":
         c3.metric("Reward", round(reward, 3))
         st.json(buildings)
 
-elif active_tab == "📈 City Learning":
-    st.header("📈 City Learning Curve")
+elif active_tab == "City Learning":
+    st.header("City Learning Curve")
     rl = st.session_state.rl_engine
     if rl.history:
         st.line_chart(rl.history)
     else:
         st.info("Run RL City steps first from the RL City panel.")
 
-elif active_tab == "🤝 Diplomacy":
-    st.header("🤝 Diplomacy Network")
+elif active_tab == "Diplomacy":
+    st.header("Diplomacy Network")
     nations = ["Alpha","Beta","Gamma","Delta","Epsilon"]
     matrix = np.random.rand(len(nations), len(nations))
     df = pd.DataFrame(matrix, columns=nations, index=nations)
     st.dataframe(df)
 
-elif active_tab == "⚔️ War":
-    st.header("⚔️ War System")
+elif active_tab == "War":
+    st.header("War System")
     c1, c2 = st.columns(2)
     with c1: attacker = st.selectbox("Attacker", ["Alpha","Beta","Gamma"])
     with c2: defender = st.selectbox("Defender", ["Beta","Gamma","Delta"])
     if st.button("Simulate Battle"):
         st.metric("Outcome", random.choice(["Victory","Stalemate","Defeat"]))
 
-elif active_tab == "🎭 Culture":
-    st.header("🎭 Culture System")
+elif active_tab == "Culture":
+    st.header("Culture System")
     cities = ["City A","City B","City C","City D"]
     st.bar_chart(dict(zip(cities, np.random.rand(4))))
 
-elif active_tab == "🌌 Consciousness":
-    st.header("🌌 Civilization Consciousness")
+elif active_tab == "Consciousness":
+    st.header("Civilization Consciousness")
     state = np.random.rand(10)
     st.json({
         "stability": float(np.mean(state)),
@@ -320,8 +326,8 @@ elif active_tab == "🌌 Consciousness":
         "innovation_drive": float(np.max(state))
     })
 
-elif active_tab == "🧬 Meta‑Evo":
-    st.header("🧬 Meta‑Evolution View")
+elif active_tab == "Meta-Evo":
+    st.header("Meta‑Evolution View")
     st.info("Meta‑learning layer active (conceptual)")
     if st.button("Run Meta Step"):
         st.json({"epoch": random.randint(1,100), "fitness": random.uniform(0.7,1.0)})
