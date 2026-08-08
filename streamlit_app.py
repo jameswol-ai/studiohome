@@ -5,15 +5,21 @@ import time
 import random
 from collections import defaultdict
 
-# ---- SAFE MATPLOTLIB ----
+# ---- SAFE IMPORTS (MATPLOTLIB & PLOTLY) ----
 try:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
+
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
 
 # =====================================================
 # IMPROVED RL CITY ENGINE
@@ -105,7 +111,7 @@ class RLCityEngine:
         return buildings, nodes, loads, failed, stability, reward
 
 # =====================================================
-# SESSION STATE
+# SESSION STATE CONFIG
 # =====================================================
 if "intent_text" not in st.session_state:
     st.session_state.intent_text = ""
@@ -117,48 +123,6 @@ if "active_tab" not in st.session_state:
     params = st.query_params
     st.session_state.active_tab = params.get("tab", "AI Brain")
 
-# =====================================================
-# CACHED MATPLOTLIB FIGURES
-# =====================================================
-@st.cache_data
-def grid_figure(grid_spacing, grid_extent):
-    if not MATPLOTLIB_AVAILABLE:
-        return None
-    fig, ax = plt.subplots()
-    ax.set_aspect('equal')
-    ax.set_xlim(0, grid_extent)
-    ax.set_ylim(0, grid_extent)
-    ax.set_xticks(np.arange(0, grid_extent + grid_spacing, grid_spacing))
-    ax.set_yticks(np.arange(0, grid_extent + grid_spacing, grid_spacing))
-    ax.grid(True, linestyle='--', alpha=0.7)
-    ax.set_xlabel("X (m)")
-    ax.set_ylabel("Y (m)")
-    ax.set_title("Architectural Grid")
-    return fig
-
-@st.cache_data
-def structural_section_figure():
-    if not MATPLOTLIB_AVAILABLE:
-        return None
-    fig, ax = plt.subplots()
-    ax.bar(["Footing", "Column", "Beam", "Slab"], [2, 5, 3, 0.3],
-           color=["brown", "gray", "orange", "lightblue"])
-    ax.set_ylabel("Typical depth (m)")
-    ax.set_title("Structural Depth Profile")
-    return fig
-
-@st.cache_data
-def random_3d_scatter():
-    if not MATPLOTLIB_AVAILABLE:
-        return None
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    ax.scatter(*[np.random.rand(50) for _ in range(3)])
-    return fig
-
-# =====================================================
-# APP CONFIG
-# =====================================================
 st.set_page_config(page_title="StudioHome", layout="wide")
 st.title("🏡 StudioHome")
 
@@ -195,7 +159,7 @@ with st.sidebar:
 st.session_state.active_tab = active_tab
 
 # =========================================================
-# PANEL CONTENT
+# PANEL CONTENT IMPLEMENTATION
 # =========================================================
 if active_tab == "🧠 AI Brain":
     st.header("🧠 AI Design Brain")
@@ -234,18 +198,19 @@ elif active_tab == "🏛️ Architecture":
         grid_extent = st.slider("Grid size (m)", 10, 60, 30)
     if st.button("Show Gridlines"):
         if MATPLOTLIB_AVAILABLE:
-            fig = grid_figure(grid_spacing, grid_extent)
-            if fig:
-                st.pyplot(fig)
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+            ax.set_xlim(0, grid_extent)
+            ax.set_ylim(0, grid_extent)
+            ax.set_xticks(np.arange(0, grid_extent + grid_spacing, grid_spacing))
+            ax.set_yticks(np.arange(0, grid_extent + grid_spacing, grid_spacing))
+            ax.grid(True, linestyle='--', alpha=0.7)
+            st.pyplot(fig)
         else:
             st.info("Matplotlib not installed – showing numerical grid")
-            rows = int(grid_extent / grid_spacing)
-            grid_data = [[f"({i*grid_spacing:.0f},{j*grid_spacing:.0f})" for j in range(rows)] for i in range(rows)]
-            st.dataframe(grid_data[:10])
 
 elif active_tab == "🏗️ Structure":
     st.header("🏗️ Structural Engine")
-    st.subheader("Typical Structural Elements")
     elements = {
         "Columns": "Vertical load‑bearing members (concrete/steel)",
         "Beams": "Horizontal members spanning between columns",
@@ -254,37 +219,16 @@ elif active_tab == "🏗️ Structure":
         "Shear Walls": "Lateral stability cores"
     }
     st.table(elements.items())
-    st.subheader("Conceptual Section")
-    if st.button("Generate Section View"):
-        if MATPLOTLIB_AVAILABLE:
-            fig = structural_section_figure()
-            if fig:
-                st.pyplot(fig)
-        else:
-            st.bar_chart({"Footing": 2, "Column": 5, "Beam": 3, "Slab": 0.3})
 
 elif active_tab == "⚡ MEP":
     st.header("⚡ MEP Systems")
     mep_tab1, mep_tab2, mep_tab3 = st.tabs(["❄️ Mechanical", "💡 Electrical", "🚿 Plumbing"])
     with mep_tab1:
         st.metric("Cooling Load", f"{random.randint(80, 250)} kW")
-        st.metric("Heating Load", f"{random.randint(50, 200)} kW")
-        st.metric("Airflow", f"{random.randint(2000, 8000)} m³/h")
-        st.write("Duct Sizing")
-        w = st.slider("Duct Width (cm)", 20, 100, 40, key="mw")
-        h = st.slider("Duct Height (cm)", 10, 50, 20, key="mh")
-        st.write(f"Area: {w*h} cm²")
     with mep_tab2:
-        col_a, col_b = st.columns(2)
-        col_a.metric("Total Load", f"{random.randint(50, 500)} kVA")
-        col_b.metric("LPD", f"{random.uniform(8, 15):.1f} W/m²")
-        st.json({"Lights":"3x16A","Sockets":"6x20A","HVAC":"2x32A","Elevator":"1x63A"})
+        st.metric("Total Load", f"{random.randint(50, 500)} kVA")
     with mep_tab3:
         st.metric("Daily Water", f"{random.randint(1000, 5000)} L")
-        st.metric("Sewage Flow", f"{random.randint(800, 4000)} L/day")
-        pipe = st.selectbox("Material", ["Copper","PVC","PEX"])
-        diam = st.slider("Diameter (mm)", 15, 100, 25, key="pd")
-        st.write(f"{pipe} Ø{diam}mm")
 
 elif active_tab == "🌍 GIS & Site":
     st.header("🌍 Terrain Analysis")
@@ -293,8 +237,6 @@ elif active_tab == "🌍 GIS & Site":
         fig, ax = plt.subplots()
         ax.plot(x, np.sin(x))
         st.pyplot(fig)
-    else:
-        st.line_chart(np.column_stack([np.linspace(0, 10, 100), np.sin(np.linspace(0, 10, 100))]))
 
 elif active_tab == "💰 Cost":
     st.header("💰 Cost Engine")
@@ -304,27 +246,34 @@ elif active_tab == "💰 Cost":
     st.bar_chart({"Foundation": 15, "Structure": 30, "MEP": 25, "Finishes": 20, "Other": 10})
 
 elif active_tab == "🎨 Render":
-    st.header("🎨 3D Massing")
-    if MATPLOTLIB_AVAILABLE:
-        fig = random_3d_scatter()
-        if fig:
-            st.pyplot(fig)
+    st.header("🎨 Interactive 3D Massing Viewer")
+    if PLOTLY_AVAILABLE:
+        # Generate sample 3D building blocks
+        df_mass = pd.DataFrame({
+            "x": np.random.randint(0, 20, 60),
+            "y": np.random.randint(0, 20, 60),
+            "z": np.random.randint(1, 15, 60),
+            "floors": np.random.randint(2, 8, 60)
+        })
+        fig = px.scatter_3d(df_mass, x="x", y="y", z="z", color="floors", size="floors",
+                            title="StudioHome Generative 3D Massing Model")
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning("Matplotlib not installed – 3D disabled")
+        st.warning("Plotly is required for interactive 3D rendering. Run `pip install plotly`.")
 
 elif active_tab == "🚀 Full Sim":
-    st.header("🚀 Full Simulation")
+    st.header("🚀 Full Simulation Pipeline")
     if st.button("Run All Modules"):
-        steps = ["AI","Architecture","Structure","MEP","Cost","Render","Export"]
+        steps = ["AI Design", "Architecture Grid", "Structural Physics", "MEP Sizing", "Cost Estimation", "3D Render Export"]
         p = st.progress(0)
         for i, s in enumerate(steps):
-            st.write(s)
-            time.sleep(0.2)
+            st.write(f"Executing: {s}...")
+            time.sleep(0.3)
             p.progress((i+1)/len(steps))
-        st.success("Simulation complete")
+        st.success("Simulation pipeline completed successfully!")
 
 elif active_tab == "🏙️ RL City":
-    st.header("🏙️ RL City")
+    st.header("🏙️ Reinforcement Learning City Engine")
     rl = st.session_state.rl_engine
     if st.button("Run City Step"):
         buildings, _, _, failed, stability, reward = rl.step()
@@ -333,47 +282,21 @@ elif active_tab == "🏙️ RL City":
         c2.metric("Failures", len(failed))
         c3.metric("Reward", round(reward, 3))
         st.json(buildings)
-    if st.checkbox("Show Risk Map"):
-        if rl.policy.risk_map:
-            keys = list(rl.policy.risk_map.keys())
-            vals = [rl.policy.risk_map[k] for k in keys]
-            x_vals = [k[0] for k in keys]
-            y_vals = [k[1] for k in keys]
-            if MATPLOTLIB_AVAILABLE:
-                fig, ax = plt.subplots()
-                scatter = ax.scatter(x_vals, y_vals, c=vals, cmap="Reds", s=100)
-                plt.colorbar(scatter, label="Risk")
-                ax.set_title("Risk Heatmap")
-                ax.set_xlim(0,25)
-                ax.set_ylim(0,25)
-                st.pyplot(fig)
-            else:
-                st.write("Enable Matplotlib for heatmap")
 
 elif active_tab == "📈 City Learning":
-    st.header("📈 Learning Curve")
+    st.header("📈 City Learning Curve")
     rl = st.session_state.rl_engine
     if rl.history:
         st.line_chart(rl.history)
     else:
-        st.info("Run RL City steps first")
+        st.info("Run RL City steps first from the RL City panel.")
 
 elif active_tab == "🤝 Diplomacy":
     st.header("🤝 Diplomacy Network")
     nations = ["Alpha","Beta","Gamma","Delta","Epsilon"]
     matrix = np.random.rand(len(nations), len(nations))
     df = pd.DataFrame(matrix, columns=nations, index=nations)
-    if MATPLOTLIB_AVAILABLE:
-        fig, ax = plt.subplots()
-        cax = ax.matshow(matrix, cmap="coolwarm")
-        fig.colorbar(cax)
-        ax.set_xticks(range(len(nations)))
-        ax.set_yticks(range(len(nations)))
-        ax.set_xticklabels(nations)
-        ax.set_yticklabels(nations)
-        st.pyplot(fig)
-    else:
-        st.dataframe(df)
+    st.dataframe(df)
 
 elif active_tab == "⚔️ War":
     st.header("⚔️ War System")
