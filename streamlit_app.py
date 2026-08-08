@@ -108,78 +108,104 @@ if "active_tab" not in st.session_state:
     params = st.query_params
     st.session_state.active_tab = params.get("tab", "AI Brain")
 
-st.set_page_config(page_title="studiohome", layout="wide")
+st.set_page_config(page_title="studiohome", page_icon="🏠", layout="wide")
 
 # =====================================================
-# CUSTOM LOGO STYLING
+# CUSTOM THEME & SIDEBAR CSS STYLING
 # =====================================================
 st.markdown("""
     <style>
-    .custom-logo-container {
+    /* Custom Logo Styling */
+    .studio-logo-wrapper {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 10px 0;
-        border-bottom: 2px solid #262730;
-        margin-bottom: 20px;
+        padding: 8px 0 16px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 16px;
     }
-    .custom-logo-icon {
-        width: 36px;
-        height: 36px;
-        background: linear-gradient(135deg, #FF4B4B, #FF8E53);
-        border-radius: 8px;
+    .studio-logo-icon {
+        width: 38px;
+        height: 38px;
+        background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: 18px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
-    .custom-logo-text {
-        font-size: 24px;
+    .studio-logo-icon svg {
+        width: 20px;
+        height: 20px;
+        fill: #FFFFFF;
+    }
+    .studio-logo-text {
+        font-size: 22px;
         font-weight: 800;
-        letter-spacing: -0.5px;
-        background: linear-gradient(90deg, #FFFFFF, #A3A8B8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.8px;
+        color: #FFFFFF;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .studio-logo-text span {
+        color: #3B82F6;
     }
     </style>
-    <div class="custom-logo-container">
-        <div class="custom-logo-icon">SH</div>
-        <div class="custom-logo-text">studiohome</div>
-    </div>
 """, unsafe_allow_html=True)
 
-# ---- SIDEBAR PANEL SELECTION ----
-tab_labels = [
-    "AI Brain",
-    "Architecture",
-    "Structure",
-    "MEP",
-    "GIS & Site",
-    "Cost",
-    "Massing",
-    "Export Suite",
-    "Full Sim",
-    "RL City",
-    "City Learning",
-    "Diplomacy",
-    "War",
-    "Culture",
-    "Consciousness",
-    "Meta-Evo"
-]
-
-if st.session_state.active_tab not in tab_labels:
-    st.session_state.active_tab = tab_labels[0]
-
+# Render Custom Logo in Sidebar
 with st.sidebar:
-    st.markdown("### Navigation Panels")
+    st.markdown("""
+        <div class="studio-logo-wrapper">
+            <div class="studio-logo-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
+            </div>
+            <div class="studio-logo-text">studio<span>home</span></div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<p style='font-size: 12px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 8px;'>Navigation Suite</p>", unsafe_allow_html=True)
+
+# Define Category Map for Clean Navigation
+categories = {
+    "Design & Engineering": [
+        "AI Brain",
+        "Architecture",
+        "Structure",
+        "MEP",
+        "GIS & Site",
+        "Cost",
+        "Massing",
+        "Export Suite",
+        "Full Sim"
+    ],
+    "Urban & Civilization": [
+        "RL City",
+        "City Learning",
+        "Diplomacy",
+        "War",
+        "Culture",
+        "Consciousness",
+        "Meta-Evo"
+    ]
+}
+
+flat_tab_labels = [tab for tabs in categories.values() for tab in tabs]
+
+if st.session_state.active_tab not in flat_tab_labels:
+    st.session_state.active_tab = flat_tab_labels[0]
+
+# Unique & Simple Sidebar Categorized Navigation
+with st.sidebar:
+    selected_category = st.selectbox(
+        "Module Category", 
+        list(categories.keys()),
+        label_visibility="collapsed"
+    )
+    
     active_tab = st.radio(
         "Select panel",
-        tab_labels,
-        index=tab_labels.index(st.session_state.active_tab),
+        categories[selected_category],
+        index=categories[selected_category].index(st.session_state.active_tab) if st.session_state.active_tab in categories[selected_category] else 0,
         key="tab_radio",
         label_visibility="collapsed"
     )
@@ -213,7 +239,7 @@ if active_tab == "AI Brain":
                 "structural_system": random.choice(["RC Frame", "Steel", "Timber"]),
                 "estimated_cost": floors * st.session_state.site_area * random.randint(800, 1200)
             }
-            st.success(f"AI generated concept: {st.session_state.generated}")
+            st.success(f"AI generated concept successfully created.")
 
 elif active_tab == "Architecture":
     st.header("Architecture Engine")
@@ -225,7 +251,7 @@ elif active_tab == "Architecture":
     if st.button("Show Grid Data"):
         rows = int(grid_extent / grid_spacing)
         grid_data = [[f"({i*grid_spacing:.0f},{j*grid_spacing:.0f})" for j in range(rows)] for i in range(rows)]
-        st.dataframe(grid_data[:10])
+        st.dataframe(grid_data[:10], use_container_width=True)
 
 elif active_tab == "Structure":
     st.header("Structural Engine")
@@ -236,7 +262,7 @@ elif active_tab == "Structure":
         "Foundation": "Spread footings, piles, or raft",
         "Shear Walls": "Lateral stability cores"
     }
-    st.table(elements.items())
+    st.table(pd.DataFrame(list(elements.items()), columns=["Element", "Description"]))
 
 elif active_tab == "MEP":
     st.header("MEP Systems")
@@ -267,7 +293,7 @@ elif active_tab == "Massing":
         "y": np.random.randint(0, 20, 30),
         "height": np.random.randint(1, 15, 30)
     })
-    st.dataframe(df_mass)
+    st.dataframe(df_mass, use_container_width=True)
 
 elif active_tab == "Export Suite":
     st.header("BIM & CAD Export Suite")
@@ -275,8 +301,6 @@ elif active_tab == "Export Suite":
     
     if "generated" in st.session_state:
         concept_data = st.session_state.generated
-        
-        # JSON Export
         json_str = json.dumps(concept_data, indent=2)
         st.download_button(
             label="Download Concept Data (.json)",
@@ -285,7 +309,6 @@ elif active_tab == "Export Suite":
             mime="application/json"
         )
         
-        # CSV Summary Report
         df_export = pd.DataFrame({
             "Parameter": ["Site Area", "Estimated Floors", "Grid Spacing", "Structural System", "Estimated Cost"],
             "Value": [
@@ -306,7 +329,6 @@ elif active_tab == "Export Suite":
     else:
         st.info("No active design concept found. Generate a concept in the 'AI Brain' panel first.")
     
-    st.subheader("CAD Geometry Interoperability")
     mock_dxf = "SECTION\n2\nHEADER\n0\nSECTION\n2\nENTITIES\n0\nLINE\n8\n0\n10\n0.0\n20\n0.0\n30\n0.0\n11\n10.0\n21\n10.0\n31\n0.0\n0\nENDSEC\n0\nEOF"
     st.download_button(
         label="Download CAD Geometry (.dxf)",
@@ -350,7 +372,7 @@ elif active_tab == "Diplomacy":
     nations = ["Alpha","Beta","Gamma","Delta","Epsilon"]
     matrix = np.random.rand(len(nations), len(nations))
     df = pd.DataFrame(matrix, columns=nations, index=nations)
-    st.dataframe(df)
+    st.dataframe(df, use_container_width=True)
 
 elif active_tab == "War":
     st.header("War System")
@@ -381,4 +403,5 @@ elif active_tab == "Meta-Evo":
         st.json({"epoch": random.randint(1,100), "fitness": random.uniform(0.7,1.0)})
 
 # ---- FOOTER ----
-st.sidebar.caption(f"Active panel: {st.session_state.active_tab}")
+st.sidebar.markdown("---")
+st.sidebar.caption(f"Active: **{st.session_state.active_tab}**")
