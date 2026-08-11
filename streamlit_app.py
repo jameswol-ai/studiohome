@@ -647,3 +647,4 @@ elif active_tab == "Meta-Evo":
 # ---- FOOTER ----
 st.sidebar.markdown("---")
 st.sidebar.caption(f"Active: **{st.session_state.active_tab}**")
+
