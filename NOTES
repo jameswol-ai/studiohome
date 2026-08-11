@@ -1,0 +1,22 @@
+studiohome/
+│
+├── streamlit_app.py          # Main Entry Point & Layout Controller
+├── rl_engine.py              # Core Reinforcement Learning & Physics Engine
+└── modules/
+    ├── __init__.py
+    ├── ai_brain.py
+    ├── architecture.py
+    ├── structure.py
+    ├── mep.py
+    ├── gis_site.py
+    ├── cost.py
+    ├── massing.py
+    ├── export_suite.py
+    ├── full_sim.py
+    ├── rl_city.py
+    ├── city_learning.py
+    ├── diplomacy.py
+    ├── war.py
+    ├── culture.py
+    ├── consciousness.py
+    └── meta_evo.py
