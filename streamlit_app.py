@@ -18,88 +18,100 @@ if "active_tab" not in st.session_state:
     st.session_state.active_tab = params.get("tab", "AI Brain")
 if "civilization_state" not in st.session_state:
     st.session_state.civilization_state = {
-        "stability": 0.85,
-        "conflict": 0.20,
-        "innovation": 0.78,
-        "culture_score": 0.65
+        "stability": 0.88,
+        "conflict": 0.15,
+        "innovation": 0.82,
+        "culture_score": 0.74
     }
 
-st.set_page_config(page_title="studiohome", page_icon="🏠", layout="wide")
+st.set_page_config(page_title="studiohome | Generative Architecture & Civil Engine", page_icon="🏛️", layout="wide")
 
 # =====================================================
-# GLASSMORPHISM & UI POLISH CSS STYLING
+# GLASSMORPHISM & ELITE UI POLISH CSS STYLING
 # =====================================================
 st.markdown("""
     <style>
+    /* App Wide Background & Font Enhancement */
     .stApp {
-        background: radial-gradient(circle at 10% 20%, rgb(15, 23, 42) 0%, rgb(10, 15, 30) 90%);
-        color: #F8FAFC;
+        background: radial-gradient(circle at 15% 15%, rgb(13, 20, 38) 0%, rgb(7, 11, 20) 85%);
+        color: #F1F5F9;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
+    
+    /* Sleek Custom Logo in Sidebar */
     .studio-logo-wrapper {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 8px 0 16px 0;
+        gap: 14px;
+        padding: 12px 0 20px 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        margin-bottom: 16px;
+        margin-bottom: 20px;
     }
     .studio-logo-icon {
-        width: 38px;
-        height: 38px;
+        width: 42px;
+        height: 42px;
         background: linear-gradient(135deg, #3B82F6, #1D4ED8);
-        border-radius: 10px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
     }
     .studio-logo-icon svg {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
         fill: #FFFFFF;
     }
     .studio-logo-text {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 800;
         letter-spacing: -0.8px;
         color: #FFFFFF;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     .studio-logo-text span {
         color: #3B82F6;
     }
+
+    /* Advanced Glassmorphism Containers */
     .glass-card {
-        background: rgba(30, 41, 59, 0.45);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 20px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        border-radius: 18px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
     }
+    
+    /* Typography Polish */
     h1, h2, h3 {
-        letter-spacing: -0.5px;
+        letter-spacing: -0.6px;
         color: #F8FAFC !important;
+        font-weight: 700 !important;
     }
+    
+    /* Sidebar Styling Polish */
     [data-testid="stSidebar"] {
-        background-color: rgba(15, 23, 42, 0.85);
+        background-color: rgba(11, 17, 32, 0.9);
         border-right: 1px solid rgba(255, 255, 255, 0.06);
     }
+    
+    /* Sleek Modern Buttons */
     .stButton button {
         background: linear-gradient(135deg, #3B82F6, #2563EB);
         color: white;
         border: none;
         border-radius: 10px;
         font-weight: 600;
-        padding: 0.5rem 1rem;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
-        transition: all 0.2s ease-in-out;
+        padding: 0.6rem 1.2rem;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        transition: all 0.25s ease-in-out;
     }
     .stButton button:hover {
         background: linear-gradient(135deg, #2563EB, #1D4ED8);
-        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        transform: translateY(-2px);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -177,5 +189,4 @@ if active_tab in module_mapping:
 
 # ---- FOOTER ----
 st.sidebar.markdown("---")
-st.sidebar.caption(f"Active: **{st.session_state.active_tab}**")
-
+st.sidebar.caption(f"Active Module: **{st.session_state.active_tab}**")
