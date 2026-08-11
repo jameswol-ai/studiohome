@@ -178,3 +178,4 @@ if active_tab in module_mapping:
 # ---- FOOTER ----
 st.sidebar.markdown("---")
 st.sidebar.caption(f"Active: **{st.session_state.active_tab}**")
+
