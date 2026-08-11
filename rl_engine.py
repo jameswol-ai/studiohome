@@ -86,3 +86,4 @@ class RLCityEngine:
         reward = stability - 0.3 * len(failed)
         self.history.append(reward)
         return buildings, nodes, loads, failed, stability, reward
+
