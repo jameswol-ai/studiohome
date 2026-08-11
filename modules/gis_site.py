@@ -1,22 +1,29 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import plotly.express as px
 
 def render():
-    st.header("GIS & Site Terrain Analyzer")
-    st.write("Analyze topography contours, solar exposure vectors, and stormwater run-off paths.")
+    st.markdown("## 🌍 GIS & Site Terrain Analyzer")
+    st.markdown("Examine topological surface contours, geotechnical profiles, and solar radiation exposure vectors.")
     
-    with st.container():
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            slope_angle = st.slider("Site Average Slope (°)", 0.0, 45.0, 8.5)
-            soil_type = st.selectbox("Subsurface Soil Classification", ["Dense Sand / Gravel", "Stiff Clay", "Weathered Rock", "Soft Alluvium"])
-        with col2:
-            orientation = st.slider("Site Orientation Angle (° from North)", 0, 360, 45)
-            st.metric("Geotechnical Bearing Capacity", f"{'300 kPa' if 'Rock' in soil_type else '150 kPa'}")
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        slope_angle = st.slider("Site Average Inclination Slope (°)", 0.0, 40.0, 6.5, step=0.5)
+        soil_profile = st.selectbox("Subsurface Geotechnical Stratum", ["Dense Weathered Sandstone", "Stiff Glacial Till", "Competent Bedrock", "Alluvial Silt Deposits"])
+    with col2:
+        solar_orientation = st.slider("Site Aspect Orientation (° from North)", 0, 360, 30, step=15)
+        bearing_capacity = 350 if "Bedrock" in soil_profile or "Sandstone" in soil_profile else 160
+        st.metric("Allowable Bearing Capacity", f"{bearing_capacity} kPa")
 
-        x = np.linspace(0, 10, 100)
-        elevation_profile = np.sin(x) * (slope_angle / 5.0)
-        st.line_chart(pd.DataFrame({"Elevation Contour (m)": elevation_profile}, index=x))
-        st.markdown('</div>', unsafe_allow_html=True)
+    # 3D Elevation Mesh Simulation using Plotly
+    x = np.linspace(-10, 10, 40)
+    y = np.linspace(-10, 10, 40)
+    X, Y = np.meshgrid(x, y)
+    Z = np.sin(X / 3) * np.cos(Y / 3) * (slope_angle / 3.0)
+
+    fig = px.imshow(Z, title="Topographic Elevation Heatmap & Contour Projection", template="plotly_dark", color_continuous_scale="Viridis")
+    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", height=320, margin=dict(t=40, b=10, l=10, r=10))
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
