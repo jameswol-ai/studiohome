@@ -31,12 +31,12 @@ class CityPolicy:
 class RLBuildingEngine:
     def generate(self, policy):
         buildings = []
-        for _ in range(5):
+        for _ in range(6):
             x, y = policy.choose_location()
             buildings.append({
                 "x": x,
                 "y": y,
-                "floors": random.randint(3, 10),
+                "floors": random.randint(4, 12),
                 "grid": random.choice([6, 8, 10, 12])
             })
         return buildings
@@ -75,6 +75,7 @@ class RLCityEngine:
         self.builder = RLBuildingEngine()
         self.physics = RLPhysics()
         self.history = []
+        self.city_state_log = []
 
     def step(self):
         buildings = self.builder.generate(self.policy)
@@ -85,5 +86,10 @@ class RLCityEngine:
         stability = max(0, 1 - len(failed) / max(1, len(nodes)))
         reward = stability - 0.3 * len(failed)
         self.history.append(reward)
+        self.city_state_log.append({
+            "stability": stability,
+            "failed_nodes": len(failed),
+            "reward": reward,
+            "total_nodes": len(nodes)
+        })
         return buildings, nodes, loads, failed, stability, reward
-
