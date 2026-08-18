@@ -34,6 +34,7 @@ from modules import (
 # STREAMLIT PAGE CONFIGURATION
 # Must be the first Streamlit command.
 # =====================================================
+
 st.set_page_config(
     page_title="studiohome | Generative Architecture & Civil Engine",
     page_icon="🏛️",
@@ -88,6 +89,11 @@ if "civilization_state" not in st.session_state:
 st.markdown(
     """
     <style>
+
+    /* =================================================
+       GLOBAL APPLICATION
+       ================================================= */
+
     .stApp {
         background:
             radial-gradient(
@@ -95,7 +101,9 @@ st.markdown(
                 rgb(13, 20, 38) 0%,
                 rgb(7, 11, 20) 85%
             );
+
         color: #F1F5F9;
+
         font-family:
             -apple-system,
             BlinkMacSystemFont,
@@ -104,29 +112,40 @@ st.markdown(
             sans-serif;
     }
 
+    /* =================================================
+       STUDIOHOME SIDEBAR BRAND
+       ================================================= */
+
     .studio-logo-wrapper {
         display: flex;
         align-items: center;
         gap: 14px;
+
         padding: 12px 0 20px 0;
+
         border-bottom:
             1px solid rgba(255, 255, 255, 0.08);
+
         margin-bottom: 20px;
     }
 
     .studio-logo-icon {
         width: 42px;
         height: 42px;
+
         background:
             linear-gradient(
                 135deg,
                 #3B82F6,
                 #1D4ED8
             );
+
         border-radius: 12px;
+
         display: flex;
         align-items: center;
         justify-content: center;
+
         box-shadow:
             0 6px 20px
             rgba(59, 130, 246, 0.45);
@@ -141,7 +160,9 @@ st.markdown(
     .studio-logo-text {
         font-size: 24px;
         font-weight: 800;
+
         letter-spacing: -0.8px;
+
         color: #FFFFFF;
     }
 
@@ -149,35 +170,60 @@ st.markdown(
         color: #3B82F6;
     }
 
+    /* =================================================
+       GLASS CARDS
+       ================================================= */
+
     .glass-card {
         background:
             rgba(30, 41, 59, 0.4);
+
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
+
         border:
             1px solid rgba(255, 255, 255, 0.08);
+
         border-radius: 18px;
+
         padding: 28px;
+
         margin-bottom: 24px;
+
         box-shadow:
             0 12px 40px 0
             rgba(0, 0, 0, 0.45);
     }
 
+    /* =================================================
+       HEADINGS
+       ================================================= */
+
     h1,
     h2,
     h3 {
         letter-spacing: -0.6px;
+
         color: #F8FAFC !important;
+
         font-weight: 700 !important;
     }
+
+    /* =================================================
+       SIDEBAR
+       ================================================= */
 
     [data-testid="stSidebar"] {
         background-color:
             rgba(11, 17, 32, 0.9);
+
         border-right:
             1px solid rgba(255, 255, 255, 0.06);
     }
+
+    /* =================================================
+       BUTTONS
+       ================================================= */
 
     .stButton button {
         background:
@@ -186,14 +232,22 @@ st.markdown(
                 #3B82F6,
                 #2563EB
             );
+
         color: white;
+
         border: none;
+
         border-radius: 10px;
+
         font-weight: 600;
-        padding: 0.6rem 1.2rem;
+
+        padding:
+            0.6rem 1.2rem;
+
         box-shadow:
             0 4px 15px
             rgba(59, 130, 246, 0.3);
+
         transition:
             all 0.25s ease-in-out;
     }
@@ -205,12 +259,15 @@ st.markdown(
                 #2563EB,
                 #1D4ED8
             );
+
         box-shadow:
             0 6px 20px
             rgba(59, 130, 246, 0.5);
+
         transform:
             translateY(-2px);
     }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -221,20 +278,28 @@ st.markdown(
 # =====================================================
 
 with st.sidebar:
+
     st.markdown(
         """
         <div class="studio-logo-wrapper">
+
             <div class="studio-logo-icon">
-                <svg viewBox="0 0 24 24">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
                     <path d="
                         M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z
                     "/>
                 </svg>
+
             </div>
 
             <div class="studio-logo-text">
                 studio<span>home</span>
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
@@ -264,6 +329,7 @@ categories = {
     "Overview & Control": [
         "Executive Cockpit",
     ],
+
     "Design & Engineering": [
         "AI Brain",
         "Architecture",
@@ -276,6 +342,7 @@ categories = {
         "Export Suite",
         "Full Sim",
     ],
+
     "Urban & Civilization": [
         "RL City",
         "City Learning",
@@ -293,6 +360,10 @@ flat_tab_labels = [
     for tab in tabs
 ]
 
+# =====================================================
+# VALIDATE ACTIVE TAB
+# =====================================================
+
 if st.session_state.active_tab not in flat_tab_labels:
     st.session_state.active_tab = "Executive Cockpit"
 
@@ -301,6 +372,7 @@ if st.session_state.active_tab not in flat_tab_labels:
 # =====================================================
 
 with st.sidebar:
+
     selected_category = st.selectbox(
         "Module Category",
         list(categories.keys()),
@@ -311,6 +383,7 @@ with st.sidebar:
     active_tab = st.radio(
         "Select panel",
         categories[selected_category],
+
         index=(
             categories[selected_category].index(
                 st.session_state.active_tab
@@ -319,25 +392,30 @@ with st.sidebar:
             in categories[selected_category]
             else 0
         ),
+
         key="tab_radio",
+
         label_visibility="collapsed",
     )
 
 st.session_state.active_tab = active_tab
 
 # =====================================================
-# EXECUTIVE COCKPIT VIEW
+# EXECUTIVE COCKPIT
 # =====================================================
 
 def render_executive_cockpit():
+
     st.markdown(
         "## 🏛️ studiohome | Executive Project Cockpit"
     )
 
     st.markdown(
-        "Master control hub monitoring live "
-        "multi-disciplinary parameters synced across "
-        "all design, engineering, and regulatory agents."
+        """
+        Master control hub monitoring live
+        multi-disciplinary parameters synced across
+        all design, engineering, and regulatory agents.
+        """
     )
 
     p = st.session_state.project
@@ -346,6 +424,10 @@ def render_executive_cockpit():
         '<div class="glass-card">',
         unsafe_allow_html=True,
     )
+
+    # =================================================
+    # KPI CARDS
+    # =================================================
 
     c1, c2, c3, c4, c5 = st.columns(5)
 
@@ -375,6 +457,10 @@ def render_executive_cockpit():
         "Live",
     )
 
+    # =================================================
+    # TELEMETRY
+    # =================================================
+
     st.markdown(
         "### 📊 Synchronized Ecosystem Telemetry"
     )
@@ -389,6 +475,7 @@ def render_executive_cockpit():
                 "Zoning Compliance",
                 "Cost Pro-Forma",
             ],
+
             "Performance Index (%)": [
                 98,
                 94,
@@ -402,21 +489,30 @@ def render_executive_cockpit():
 
     fig = px.bar(
         df_overview,
+
         x="Discipline Module",
+
         y="Performance Index (%)",
+
         color="Performance Index (%)",
+
         title=(
             "Unified Cross-Module "
             "Engineering Performance"
         ),
+
         template="plotly_dark",
+
         height=320,
+
         range_y=[80, 100],
     )
 
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
+
         plot_bgcolor="rgba(0,0,0,0)",
+
         margin=dict(
             t=40,
             b=10,
@@ -430,6 +526,10 @@ def render_executive_cockpit():
         use_container_width=True,
     )
 
+    # =================================================
+    # QUICK ACTIONS
+    # =================================================
+
     st.markdown(
         "### 🚀 Quick Inter-Module Actions"
     )
@@ -437,27 +537,42 @@ def render_executive_cockpit():
     col_a, col_b, col_c = st.columns(3)
 
     with col_a:
+
         if st.button(
             "📜 Run Zoning Code Audit",
             use_container_width=True,
         ):
-            st.session_state.active_tab = "Zoning Code"
+
+            st.session_state.active_tab = (
+                "Zoning Code"
+            )
+
             st.rerun()
 
     with col_b:
+
         if st.button(
             "⚡ Run Full Simulation Audit",
             use_container_width=True,
         ):
-            st.session_state.active_tab = "Full Sim"
+
+            st.session_state.active_tab = (
+                "Full Sim"
+            )
+
             st.rerun()
 
     with col_c:
+
         if st.button(
             "📦 Export Unified BIM Suite",
             use_container_width=True,
         ):
-            st.session_state.active_tab = "Export Suite"
+
+            st.session_state.active_tab = (
+                "Export Suite"
+            )
+
             st.rerun()
 
     st.markdown(
@@ -466,11 +581,12 @@ def render_executive_cockpit():
     )
 
 # =====================================================
-# MODULE ROUTER MAPPING
+# MODULE ROUTER
 # =====================================================
 
 module_mapping = {
     "Executive Cockpit": None,
+
     "AI Brain": ai_brain,
     "Architecture": architecture,
     "Structure": structure,
@@ -481,6 +597,7 @@ module_mapping = {
     "Zoning Code": zoning_code,
     "Export Suite": export_suite,
     "Full Sim": full_sim,
+
     "RL City": rl_city,
     "City Learning": city_learning,
     "Diplomacy": diplomacy,
@@ -495,20 +612,23 @@ module_mapping = {
 # =====================================================
 
 if active_tab == "Executive Cockpit":
+
     render_executive_cockpit()
 
 elif (
     active_tab in module_mapping
     and module_mapping[active_tab]
 ):
+
     module_mapping[active_tab].render()
 
 # =====================================================
-# FOOTER
+# SIDEBAR FOOTER
 # =====================================================
 
 st.sidebar.markdown("---")
 
 st.sidebar.caption(
-    f"Active Module: **{st.session_state.active_tab}**"
+    f"Active Module: "
+    f"**{st.session_state.active_tab}**"
 )
