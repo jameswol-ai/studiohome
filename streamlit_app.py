@@ -39,12 +39,10 @@ st.set_page_config(
 # =====================================================
 
 if "rl_engine" not in st.session_state:
-
     st.session_state.rl_engine = RLCityEngine()
 
 
 if "project" not in st.session_state:
-
     st.session_state.project = {
         "intent": (
             "A cutting-edge net-zero carbon 12-storey "
@@ -67,19 +65,15 @@ if "project" not in st.session_state:
 
 
 if "active_tab" not in st.session_state:
-
     params = st.query_params
-
     requested_tab = params.get(
         "tab",
         "Executive Cockpit",
     )
-
     st.session_state.active_tab = requested_tab
 
 
 if "civilization_state" not in st.session_state:
-
     st.session_state.civilization_state = {
         "stability": 0.91,
         "conflict": 0.12,
@@ -93,9 +87,7 @@ if "civilization_state" not in st.session_state:
 # =====================================================
 
 categories = build_categories()
-
 module_mapping = build_module_mapping()
-
 
 flat_tab_labels = [
     tab
@@ -108,14 +100,8 @@ flat_tab_labels = [
 # NORMALIZE ACTIVE TAB
 # =====================================================
 
-if (
-    st.session_state.active_tab
-    not in flat_tab_labels
-):
-
-    st.session_state.active_tab = (
-        "Executive Cockpit"
-    )
+if st.session_state.active_tab not in flat_tab_labels:
+    st.session_state.active_tab = "Executive Cockpit"
 
 
 # =====================================================
@@ -131,16 +117,13 @@ st.markdown(
        ================================================= */
 
     .stApp {
-
         background:
             radial-gradient(
                 circle at 15% 15%,
                 rgb(13, 20, 38) 0%,
                 rgb(7, 11, 20) 85%
             );
-
         color: #F1F5F9;
-
         font-family:
             -apple-system,
             BlinkMacSystemFont,
@@ -155,13 +138,8 @@ st.markdown(
        ================================================= */
 
     [data-testid="stSidebar"] {
-
-        background:
-            rgba(11, 17, 32, 0.96);
-
-        border-right:
-            1px solid
-            rgba(255, 255, 255, 0.06);
+        background: rgba(11, 17, 32, 0.96);
+        border-right: 1px solid rgba(255, 255, 255, 0.06);
     }
 
 
@@ -170,79 +148,46 @@ st.markdown(
        ================================================= */
 
     .studio-logo-wrapper {
-
         display: flex;
-
         align-items: center;
-
         gap: 14px;
-
-        padding:
-            12px 0 20px 0;
-
-        border-bottom:
-            1px solid
-            rgba(255, 255, 255, 0.08);
-
+        padding: 12px 0 20px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         margin-bottom: 20px;
     }
 
-
     .studio-logo-icon {
-
         width: 42px;
-
         height: 42px;
-
         min-width: 42px;
-
         background:
             linear-gradient(
                 135deg,
                 #3B82F6,
                 #1D4ED8
             );
-
         border-radius: 12px;
-
         display: flex;
-
         align-items: center;
-
         justify-content: center;
-
-        box-shadow:
-            0 6px 20px
-            rgba(59, 130, 246, 0.45);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
     }
 
-
     .studio-logo-icon svg {
-
         width: 22px;
-
         height: 22px;
-
         fill: #FFFFFF;
     }
 
-
     .studio-logo-text {
-
         font-size: 24px;
-
         font-weight: 800;
-
         letter-spacing: -0.8px;
-
         color: #FFFFFF;
-
         line-height: 1;
     }
 
-
     .studio-logo-text span {
-
         color: #3B82F6;
     }
 
@@ -252,29 +197,14 @@ st.markdown(
        ================================================= */
 
     .glass-card {
-
-        background:
-            rgba(30, 41, 59, 0.40);
-
-        backdrop-filter:
-            blur(20px);
-
-        -webkit-backdrop-filter:
-            blur(20px);
-
-        border:
-            1px solid
-            rgba(255, 255, 255, 0.08);
-
+        background: rgba(30, 41, 59, 0.40);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 18px;
-
         padding: 28px;
-
         margin-bottom: 24px;
-
-        box-shadow:
-            0 12px 40px
-            rgba(0, 0, 0, 0.45);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
     }
 
 
@@ -285,11 +215,8 @@ st.markdown(
     h1,
     h2,
     h3 {
-
         letter-spacing: -0.6px;
-
         color: #F8FAFC !important;
-
         font-weight: 700 !important;
     }
 
@@ -299,49 +226,30 @@ st.markdown(
        ================================================= */
 
     .stButton button {
-
         background:
             linear-gradient(
                 135deg,
                 #3B82F6,
                 #2563EB
             );
-
         color: #FFFFFF;
-
         border: none;
-
         border-radius: 10px;
-
         font-weight: 600;
-
-        padding:
-            0.6rem 1.2rem;
-
-        box-shadow:
-            0 4px 15px
-            rgba(59, 130, 246, 0.30);
-
-        transition:
-            all 0.25s ease-in-out;
+        padding: 0.6rem 1.2rem;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.30);
+        transition: all 0.25s ease-in-out;
     }
 
-
     .stButton button:hover {
-
         background:
             linear-gradient(
                 135deg,
                 #2563EB,
                 #1D4ED8
             );
-
-        box-shadow:
-            0 6px 20px
-            rgba(59, 130, 246, 0.50);
-
-        transform:
-            translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.50);
+        transform: translateY(-2px);
     }
 
     </style>
@@ -355,47 +263,21 @@ st.markdown(
 # =====================================================
 
 with st.sidebar:
-
     st.markdown(
         """
         <div class="studio-logo-wrapper">
-
             <div class="studio-logo-icon">
-
-                <svg
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                >
-
-                    <path d="
-                        M12 3
-                        L2 12
-                        h3
-                        v8
-                        h6
-                        v-6
-                        h2
-                        v6
-                        h6
-                        v-8
-                        h3
-                        L12 3
-                        z
-                    "/>
-
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3 L2 12 h3 v8 h6 v-6 h2 v6 h6 v-8 h3 L12 3 z"/>
                 </svg>
-
             </div>
-
             <div class="studio-logo-text">
                 studio<span>home</span>
             </div>
-
         </div>
         """,
         unsafe_allow_html=True,
     )
-
 
     st.markdown(
         """
@@ -418,57 +300,31 @@ with st.sidebar:
 # SIDEBAR NAVIGATION HELPERS
 # =====================================================
 
-category_names = list(
-    categories.keys()
-)
+category_names = list(categories.keys())
 
 
-def get_category_for_tab(
-    tab: str,
-) -> str:
-    """
-    Return the category containing a tab.
-    """
-
+def get_category_for_tab(tab: str) -> str:
+    """Return the category containing a tab."""
     for category, tabs in categories.items():
-
         if tab in tabs:
-
             return category
-
     return category_names[0]
 
 
 def normalize_active_tab() -> None:
-    """
-    Ensure active_tab always contains a valid
-    registered tab.
-    """
-
+    """Ensure active_tab always contains a valid registered tab."""
     active_tab = st.session_state.get(
         "active_tab",
         "Executive Cockpit",
     )
-
     if active_tab not in flat_tab_labels:
-
-        st.session_state.active_tab = (
-            "Executive Cockpit"
-        )
+        st.session_state.active_tab = "Executive Cockpit"
 
 
 def on_category_change() -> None:
-    """
-    Synchronize active_tab when category changes.
-    """
-
+    """Synchronize active_tab when category changes."""
     category = st.session_state.module_category
-
-    tabs = categories.get(
-        category,
-        [],
-    )
-
+    tabs = categories.get(category, [])
     if not tabs:
         return
 
@@ -476,39 +332,23 @@ def on_category_change() -> None:
         "active_tab",
         "Executive Cockpit",
     )
-
     if current_tab in tabs:
-
         st.session_state.tab_radio = current_tab
-
         return
 
     first_tab = tabs[0]
-
     st.session_state.active_tab = first_tab
-
     st.session_state.tab_radio = first_tab
 
 
 def on_tab_change() -> None:
-    """
-    Synchronize category and active_tab when the
-    module radio changes.
-    """
-
+    """Synchronize category and active_tab when the module radio changes."""
     selected_tab = st.session_state.tab_radio
-
     if selected_tab not in flat_tab_labels:
-
         return
 
     st.session_state.active_tab = selected_tab
-
-    st.session_state.module_category = (
-        get_category_for_tab(
-            selected_tab
-        )
-    )
+    st.session_state.module_category = get_category_for_tab(selected_tab)
 
 
 # =====================================================
@@ -517,34 +357,15 @@ def on_tab_change() -> None:
 
 normalize_active_tab()
 
-
 active_category = get_category_for_tab(
-    st.session_state.active_tab
+    st.session_state.active_tab,
 )
 
+if st.session_state.get("module_category") not in category_names:
+    st.session_state.module_category = active_category
 
-if (
-    st.session_state.get(
-        "module_category"
-    )
-    not in category_names
-):
-
-    st.session_state.module_category = (
-        active_category
-    )
-
-
-if (
-    st.session_state.get(
-        "tab_radio"
-    )
-    not in flat_tab_labels
-):
-
-    st.session_state.tab_radio = (
-        st.session_state.active_tab
-    )
+if st.session_state.get("tab_radio") not in flat_tab_labels:
+    st.session_state.tab_radio = st.session_state.active_tab
 
 
 # =====================================================
@@ -552,71 +373,39 @@ if (
 # =====================================================
 
 with st.sidebar:
-
     selected_category = st.selectbox(
         "Module Category",
         category_names,
         index=category_names.index(
-            st.session_state.module_category
+            st.session_state.module_category,
         ),
         key="module_category",
         on_change=on_category_change,
         label_visibility="collapsed",
     )
 
-
-    available_tabs = categories.get(
-        selected_category,
-        [],
-    )
-
+    available_tabs = categories.get(selected_category, [])
 
     if not available_tabs:
-
-        st.error(
-            f"No modules registered for "
-            f"category '{selected_category}'."
-        )
-
-        active_tab = (
-            st.session_state.active_tab
-        )
-
+        st.error(f"No modules registered for category '{selected_category}'.")
+        active_tab = st.session_state.active_tab
     else:
+        if st.session_state.active_tab not in available_tabs:
+            st.session_state.active_tab = available_tabs[0]
 
-        if (
-            st.session_state.active_tab
-            not in available_tabs
-        ):
-
-            st.session_state.active_tab = (
-                available_tabs[0]
-            )
-
-
-        if (
-            st.session_state.get(
-                "tab_radio"
-            )
-            not in available_tabs
-        ):
-
-            st.session_state.tab_radio = (
-                st.session_state.active_tab
-            )
-
+        if st.session_state.get("tab_radio") not in available_tabs:
+            st.session_state.tab_radio = st.session_state.active_tab
 
         active_tab = st.radio(
             "Select panel",
             available_tabs,
             index=available_tabs.index(
-                st.session_state.active_tab
+                st.session_state.active_tab,
             ),
             key="tab_radio",
             on_change=on_tab_change,
             label_visibility="collapsed",
         )
-
 
 st.session_state.active_tab = active_tab
 
@@ -625,16 +414,8 @@ st.session_state.active_tab = active_tab
 # SAFE QUICK-ACTION ROUTING
 # =====================================================
 
-def route_cockpit_action(
-    action: str,
-) -> None:
-    """
-    Validate and execute a cockpit quick action.
-
-    No rerun occurs until the destination is confirmed
-    against both flat_tab_labels and module_mapping.
-    """
-
+def route_cockpit_action(action: str) -> None:
+    """Validate and execute a cockpit quick action."""
     (
         valid,
         destination,
@@ -645,86 +426,21 @@ def route_cockpit_action(
         flat_tab_labels=flat_tab_labels,
     )
 
-
     if not valid:
-
-        st.error(
-            f"🚨 Quick-action routing error: "
-            f"{error}"
-        )
-
+        st.error(f"🚨 Quick-action routing error: {error}")
         return
 
-
-    if destination is None:
-
-        st.error(
-            f"🚨 Quick-action '{action}' returned "
-            "an empty destination."
-        )
-
+    if destination is None or destination not in flat_tab_labels or destination not in module_mapping:
+        st.error(f"🚨 Cannot navigate to '{destination}'. Invalid destination.")
         return
-
-
-    if destination not in flat_tab_labels:
-
-        st.error(
-            f"🚨 Cannot navigate to "
-            f"'{destination}'. "
-            "The destination is not registered "
-            "in flat_tab_labels."
-        )
-
-        return
-
-
-    if destination not in module_mapping:
-
-        st.error(
-            f"🚨 Cannot navigate to "
-            f"'{destination}'. "
-            "The destination is not registered "
-            "in module_mapping."
-        )
-
-        return
-
 
     if module_mapping[destination] is None:
-
-        st.error(
-            f"🚨 Cannot navigate to "
-            f"'{destination}'. "
-            "The destination has no registered "
-            "module."
-        )
-
+        st.error(f"🚨 Cannot navigate to '{destination}'. No registered module.")
         return
 
-
-    # -------------------------------------------------
-    # Synchronize navigation state
-    # -------------------------------------------------
-
-    st.session_state.active_tab = (
-        destination
-    )
-
-    st.session_state.module_category = (
-        get_category_for_tab(
-            destination
-        )
-    )
-
-    st.session_state.tab_radio = (
-        destination
-    )
-
-
-    # -------------------------------------------------
-    # Rerun only after successful validation
-    # -------------------------------------------------
-
+    st.session_state.active_tab = destination
+    st.session_state.module_category = get_category_for_tab(destination)
+    st.session_state.tab_radio = destination
     st.rerun()
 
 
@@ -733,83 +449,27 @@ def route_cockpit_action(
 # =====================================================
 
 def render_executive_cockpit() -> None:
-    """
-    Render the Executive Project Cockpit.
-    """
-
-    st.markdown(
-        "## 🏛️ studiohome | Executive Project Cockpit"
-    )
-
-
+    """Render the Executive Project Cockpit."""
+    st.markdown("## 🏛️ studiohome | Executive Project Cockpit")
     st.markdown(
         """
-        Master control hub monitoring live
-        multi-disciplinary parameters synced across
-        all design, engineering, and regulatory agents.
+        Master control hub monitoring live multi-disciplinary parameters synced 
+        across all design, engineering, and regulatory agents.
         """
     )
-
 
     project = st.session_state.project
 
-
-    # =================================================
-    # GLASS CARD
-    # =================================================
-
-    st.markdown(
-        '<div class="glass-card">',
-        unsafe_allow_html=True,
-    )
-
-
-    # =================================================
-    # KPI ROW
-    # =================================================
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 
     c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Active Typology", project["typology"].split()[0])
+    c2.metric("Project CAPEX", f"${project['estimated_cost']:,.0f}")
+    c3.metric("Embodied Carbon", f"{project['carbon_score']} tCO₂e")
+    c4.metric("Storey Height", f"{project['floors']} Levels")
+    c5.metric("System Status", "Synchronized", "Live")
 
-
-    c1.metric(
-        "Active Typology",
-        project["typology"].split()[0],
-    )
-
-
-    c2.metric(
-        "Project CAPEX",
-        f"${project['estimated_cost']:,.0f}",
-    )
-
-
-    c3.metric(
-        "Embodied Carbon",
-        f"{project['carbon_score']} tCO₂e",
-    )
-
-
-    c4.metric(
-        "Storey Height",
-        f"{project['floors']} Levels",
-    )
-
-
-    c5.metric(
-        "System Status",
-        "Synchronized",
-        "Live",
-    )
-
-
-    # =================================================
-    # TELEMETRY
-    # =================================================
-
-    st.markdown(
-        "### 📊 Synchronized Ecosystem Telemetry"
-    )
-
+    st.markdown("### 📊 Synchronized Ecosystem Telemetry")
 
     df_overview = pd.DataFrame(
         {
@@ -832,99 +492,42 @@ def render_executive_cockpit() -> None:
         }
     )
 
-
     fig = px.bar(
         df_overview,
         x="Discipline Module",
         y="Performance Index (%)",
         color="Performance Index (%)",
-        title=(
-            "Unified Cross-Module "
-            "Engineering Performance"
-        ),
+        title="Unified Cross-Module Engineering Performance",
         template="plotly_dark",
         height=320,
         range_y=[80, 100],
     )
 
-
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        margin=dict(
-            t=40,
-            b=10,
-            l=10,
-            r=10,
-        ),
+        margin=dict(t=40, b=10, l=10, r=10),
     )
 
+    st.plotly_chart(fig, use_container_width=True)
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-    )
-
-
-    # =================================================
-    # QUICK ACTIONS
-    # =================================================
-
-    st.markdown(
-        "### 🚀 Quick Inter-Module Actions"
-    )
-
+    st.markdown("### 🚀 Quick Inter-Module Actions")
 
     col_a, col_b, col_c = st.columns(3)
 
-
     with col_a:
-
-        if st.button(
-            "📜 Run Zoning Code Audit",
-            use_container_width=True,
-            key="cockpit_zoning",
-        ):
-
-            route_cockpit_action(
-                "zoning_audit"
-            )
-
+        if st.button("📜 Run Zoning Code Audit", use_container_width=True, key="cockpit_zoning"):
+            route_cockpit_action("zoning_audit")
 
     with col_b:
-
-        if st.button(
-            "⚡ Run Full Simulation Audit",
-            use_container_width=True,
-            key="cockpit_full_sim",
-        ):
-
-            route_cockpit_action(
-                "full_simulation"
-            )
-
+        if st.button("⚡ Run Full Simulation Audit", use_container_width=True, key="cockpit_full_sim"):
+            route_cockpit_action("full_simulation")
 
     with col_c:
+        if st.button("📦 Export Unified BIM Suite", use_container_width=True, key="cockpit_export"):
+            route_cockpit_action("export_bim")
 
-        if st.button(
-            "📦 Export Unified BIM Suite",
-            use_container_width=True,
-            key="cockpit_export",
-        ):
-
-            route_cockpit_action(
-                "export_bim"
-            )
-
-
-    # =================================================
-    # CLOSE CARD
-    # =================================================
-
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # =====================================================
@@ -932,63 +535,24 @@ def render_executive_cockpit() -> None:
 # =====================================================
 
 if active_tab == "Executive Cockpit":
-
     render_executive_cockpit()
-
-
 elif active_tab in module_mapping:
-
     module = module_mapping[active_tab]
-
-
     if module is None:
-
-        st.error(
-            f"Module '{active_tab}' is registered "
-            "but has no module implementation."
-        )
-
-
+        st.error(f"Module '{active_tab}' is registered but has no implementation.")
     else:
-
-        render = get_render_function(
-            module
-        )
-
-
+        render = get_render_function(module)
         if render is None:
-
-            st.error(
-                f"Module '{active_tab}' does not expose "
-                "a callable render() function."
-            )
-
-
+            st.error(f"Module '{active_tab}' does not expose a render() function.")
         else:
-
             try:
-
                 render()
-
             except Exception as exc:
-
-                st.error(
-                    f"Unable to render '{active_tab}'."
-                )
-
-                with st.expander(
-                    "Technical details",
-                    expanded=False,
-                ):
-
+                st.error(f"Unable to render '{active_tab}'.")
+                with st.expander("Technical details", expanded=False):
                     st.exception(exc)
-
-
 else:
-
-    st.error(
-        f"Unknown module: '{active_tab}'"
-    )
+    st.error(f"Unknown module: '{active_tab}'")
 
 
 # =====================================================
@@ -996,9 +560,4 @@ else:
 # =====================================================
 
 st.sidebar.markdown("---")
-
-st.sidebar.caption(
-    f"Active Module: **"
-    f"{st.session_state.active_tab}"
-    f"**"
-)
+st.sidebar.caption(f"Active Module: **{st.session_state.active_tab}**")
