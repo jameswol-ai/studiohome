@@ -20,3 +20,40 @@ studiohome/
     ├── culture.py
     ├── consciousness.py
     └── meta_evo.py
+
+
+studiohome/
+│
+├── streamlit_app.py
+├── rl_engine.py
+├── README.md
+├── check_module_registry.py
+│
+├── modules/
+│   ├── __init__.py
+│   ├── registry.py
+│   ├── routing.py
+│   │
+│   ├── ai_brain.py
+│   ├── architecture.py
+│   ├── structure.py
+│   ├── mep.py
+│   ├── gis_site.py
+│   ├── cost.py
+│   ├── massing.py
+│   ├── zoning_code.py
+│   ├── export_suite.py
+│   ├── full_sim.py
+│   ├── rl_city.py
+│   ├── city_learning.py
+│   ├── diplomacy.py
+│   ├── war.py
+│   ├── culture.py
+│   ├── consciousness.py
+│   └── meta_evo.py
+│
+└── tests/
+    ├── __init__.py
+    ├── conftest.py
+    ├── test_registry.py
+    └── test_routing.py
