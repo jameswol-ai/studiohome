@@ -17,7 +17,9 @@ from modules.registry import (
     get_render_function,
 )
 
-from modules.routing import get_quick_action_route
+from modules.routing import (
+    validate_quick_action_route,
+)
 
 
 # =====================================================
@@ -93,6 +95,10 @@ flat_tab_labels = [
     for tab in tabs
 ]
 
+
+# =====================================================
+# ACTIVE TAB NORMALIZATION
+# =====================================================
 
 if st.session_state.active_tab not in flat_tab_labels:
     st.session_state.active_tab = "Executive Cockpit"
@@ -319,11 +325,13 @@ category_names = list(categories.keys())
 
 def get_category_for_tab(tab: str) -> str:
     """
-    Return the category containing the supplied tab.
+    Return the category containing a tab.
 
-    Falls back safely to the first registered category.
+    Falls back to the first category.
     """
+
     for category, tabs in categories.items():
+
         if tab in tabs:
             return category
 
@@ -334,36 +342,27 @@ def normalize_active_tab() -> None:
     """
     Ensure active_tab always points to a registered tab.
     """
-    active_tab = st.session_state.get(
+
+    active_tab_value = st.session_state.get(
         "active_tab",
         "Executive Cockpit",
     )
 
-    if active_tab not in flat_tab_labels:
-        st.session_state.active_tab = "Executive Cockpit"
+    if active_tab_value not in flat_tab_labels:
 
-
-def sync_category_from_active_tab() -> None:
-    """
-    Synchronize the category widget with active_tab.
-    """
-    normalize_active_tab()
-
-    category = get_category_for_tab(
-        st.session_state.active_tab
-    )
-
-    st.session_state.module_category = category
+        st.session_state.active_tab = (
+            "Executive Cockpit"
+        )
 
 
 def on_category_change() -> None:
     """
-    When the user changes category, select the first
-    valid tab in that category.
+    Synchronize active_tab when the user changes category.
     """
+
     category = st.session_state.module_category
 
-    tabs = categories.get(category)
+    tabs = categories.get(category, [])
 
     if not tabs:
         return
@@ -373,23 +372,19 @@ def on_category_change() -> None:
         "Executive Cockpit",
     )
 
-    # Keep the current tab if it belongs to the
-    # newly selected category.
     if current_tab in tabs:
+        st.session_state.tab_radio = current_tab
         return
 
-    # Otherwise move to the first tab in the category.
     st.session_state.active_tab = tabs[0]
-
-    # Keep the radio widget synchronized.
     st.session_state.tab_radio = tabs[0]
 
 
 def on_tab_change() -> None:
     """
-    When the radio changes, make active_tab the selected
-    tab and update the category accordingly.
+    Synchronize active_tab when the user changes module.
     """
+
     selected_tab = st.session_state.tab_radio
 
     if selected_tab not in flat_tab_labels:
@@ -397,16 +392,15 @@ def on_tab_change() -> None:
 
     st.session_state.active_tab = selected_tab
 
-    category = get_category_for_tab(selected_tab)
+    category = get_category_for_tab(
+        selected_tab
+    )
 
     st.session_state.module_category = category
 
 
-# -----------------------------------------------------
-# Normalize state BEFORE creating widgets
-# -----------------------------------------------------
-
 normalize_active_tab()
+
 
 active_category = get_category_for_tab(
     st.session_state.active_tab
@@ -414,19 +408,26 @@ active_category = get_category_for_tab(
 
 
 # -----------------------------------------------------
-# Synchronize widget state BEFORE creating widgets
+# Synchronize widget state before rendering widgets.
 # -----------------------------------------------------
 
-st.session_state.module_category = active_category
+if (
+    st.session_state.get("module_category")
+    not in category_names
+):
+    st.session_state.module_category = (
+        active_category
+    )
 
-st.session_state.tab_radio = (
-    st.session_state.active_tab
-)
 
+if (
+    st.session_state.get("tab_radio")
+    not in flat_tab_labels
+):
+    st.session_state.tab_radio = (
+        st.session_state.active_tab
+    )
 
-# -----------------------------------------------------
-# Render sidebar controls
-# -----------------------------------------------------
 
 with st.sidebar:
 
@@ -448,10 +449,6 @@ with st.sidebar:
     )
 
 
-    # -------------------------------------------------
-    # Safety fallback
-    # -------------------------------------------------
-
     if not available_tabs:
 
         st.error(
@@ -459,10 +456,10 @@ with st.sidebar:
             f"category '{selected_category}'."
         )
 
+        active_tab = st.session_state.active_tab
+
     else:
 
-        # If the active tab isn't part of the selected
-        # category, use the first valid tab.
         if (
             st.session_state.active_tab
             not in available_tabs
@@ -472,7 +469,6 @@ with st.sidebar:
             )
 
 
-        # Keep radio state valid.
         if (
             st.session_state.get("tab_radio")
             not in available_tabs
@@ -494,11 +490,108 @@ with st.sidebar:
         )
 
 
-# -----------------------------------------------------
-# Final synchronization
-# -----------------------------------------------------
-
 st.session_state.active_tab = active_tab
+
+
+# =====================================================
+# SAFE QUICK-ACTION NAVIGATION
+# =====================================================
+
+def route_cockpit_action(action: str) -> None:
+    """
+    Validate and execute a cockpit quick action.
+
+    The application only calls st.rerun() after the
+    destination has passed both registry checks.
+    """
+
+    (
+        valid,
+        destination,
+        error,
+    ) = validate_quick_action_route(
+        action=action,
+        module_mapping=module_mapping,
+        flat_tab_labels=flat_tab_labels,
+    )
+
+
+    # -------------------------------------------------
+    # Validation failure
+    # -------------------------------------------------
+
+    if not valid:
+
+        st.error(
+            f"🚨 Quick-action routing error: "
+            f"{error}"
+        )
+
+        return
+
+
+    # -------------------------------------------------
+    # Defensive destination check
+    # -------------------------------------------------
+
+    if destination is None:
+
+        st.error(
+            f"🚨 Quick-action '{action}' produced "
+            "an empty destination."
+        )
+
+        return
+
+
+    if destination not in flat_tab_labels:
+
+        st.error(
+            f"🚨 Cannot navigate to "
+            f"'{destination}'. "
+            "The destination is not registered "
+            "in flat_tab_labels."
+        )
+
+        return
+
+
+    if destination not in module_mapping:
+
+        st.error(
+            f"🚨 Cannot navigate to "
+            f"'{destination}'. "
+            "The destination is not registered "
+            "in module_mapping."
+        )
+
+        return
+
+
+    if module_mapping[destination] is None:
+
+        st.error(
+            f"🚨 Cannot navigate to "
+            f"'{destination}'. "
+            "The destination has no registered module."
+        )
+
+        return
+
+
+    # -------------------------------------------------
+    # Commit navigation
+    # -------------------------------------------------
+
+    st.session_state.active_tab = destination
+
+    st.session_state.module_category = (
+        get_category_for_tab(destination)
+    )
+
+    st.session_state.tab_radio = destination
+
+    st.rerun()
 
 
 # =====================================================
@@ -507,7 +600,7 @@ st.session_state.active_tab = active_tab
 
 def render_executive_cockpit() -> None:
     """
-    Render the studiohome Executive Project Cockpit.
+    Render the Executive Project Cockpit.
     """
 
     st.markdown(
@@ -521,6 +614,7 @@ def render_executive_cockpit() -> None:
         all design, engineering, and regulatory agents.
         """
     )
+
 
     project = st.session_state.project
 
@@ -657,13 +751,9 @@ def render_executive_cockpit() -> None:
             key="cockpit_zoning",
         ):
 
-            destination = get_quick_action_route(
+            route_cockpit_action(
                 "zoning_audit"
             )
-
-            if destination:
-                st.session_state.active_tab = destination
-                st.rerun()
 
 
     with col_b:
@@ -674,13 +764,9 @@ def render_executive_cockpit() -> None:
             key="cockpit_full_sim",
         ):
 
-            destination = get_quick_action_route(
+            route_cockpit_action(
                 "full_simulation"
             )
-
-            if destination:
-                st.session_state.active_tab = destination
-                st.rerun()
 
 
     with col_c:
@@ -691,13 +777,9 @@ def render_executive_cockpit() -> None:
             key="cockpit_export",
         ):
 
-            destination = get_quick_action_route(
+            route_cockpit_action(
                 "export_bim"
             )
-
-            if destination:
-                st.session_state.active_tab = destination
-                st.rerun()
 
 
     # =================================================
@@ -726,8 +808,9 @@ elif active_tab in module_mapping:
 
     if module is None:
 
-        st.warning(
-            f"Module '{active_tab}' is not configured."
+        st.error(
+            f"Module '{active_tab}' is registered "
+            "but has no module implementation."
         )
 
 
@@ -760,6 +843,7 @@ elif active_tab in module_mapping:
                     "Technical details",
                     expanded=False,
                 ):
+
                     st.exception(exc)
 
 
