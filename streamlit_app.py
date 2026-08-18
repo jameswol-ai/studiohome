@@ -345,27 +345,52 @@ st.session_state.active_tab = active_tab
 # EXECUTIVE COCKPIT
 # =====================================================
 
-def render_executive_cockpit() -> None:
-    """Render the executive project control center."""
+with col_a:
 
-    st.markdown(
-        "## 🏛️ studiohome | Executive Project Cockpit"
-    )
+    if st.button(
+        "📜 Run Zoning Code Audit",
+        use_container_width=True,
+        key="cockpit_zoning",
+    ):
+        destination = get_quick_action_route(
+            "zoning_audit"
+        )
 
-    st.markdown(
-        """
-        Master control hub monitoring live
-        multi-disciplinary parameters synced across
-        all design, engineering, and regulatory agents.
-        """
-    )
+        if destination:
+            st.session_state.active_tab = destination
+            st.rerun()
 
-    project = st.session_state.project
 
-    st.markdown(
-        '<div class="glass-card">',
-        unsafe_allow_html=True,
-    )
+with col_b:
+
+    if st.button(
+        "⚡ Run Full Simulation Audit",
+        use_container_width=True,
+        key="cockpit_full_sim",
+    ):
+        destination = get_quick_action_route(
+            "full_simulation"
+        )
+
+        if destination:
+            st.session_state.active_tab = destination
+            st.rerun()
+
+
+with col_c:
+
+    if st.button(
+        "📦 Export Unified BIM Suite",
+        use_container_width=True,
+        key="cockpit_export",
+    ):
+        destination = get_quick_action_route(
+            "export_bim"
+        )
+
+        if destination:
+            st.session_state.active_tab = destination
+            st.rerun()
 
     # =================================================
     # KPI ROW
