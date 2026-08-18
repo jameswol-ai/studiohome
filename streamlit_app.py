@@ -3,31 +3,17 @@ studiohome
 Generative Architecture & Civil Engine
 """
 
-import streamlit as st
-import plotly.express as px
+from __future__ import annotations
+
 import pandas as pd
+import plotly.express as px
+import streamlit as st
 
 from rl_engine import RLCityEngine
-
-# Import all individual modular panels including Zoning Code
-from modules import (
-    ai_brain,
-    architecture,
-    structure,
-    mep,
-    gis_site,
-    cost,
-    massing,
-    zoning_code,
-    export_suite,
-    full_sim,
-    rl_city,
-    city_learning,
-    diplomacy,
-    war,
-    culture,
-    consciousness,
-    meta_evo,
+from modules.registry import (
+    build_categories,
+    build_module_mapping,
+    get_render_function,
 )
 
 # =====================================================
@@ -42,7 +28,7 @@ st.set_page_config(
 )
 
 # =====================================================
-# UNIFIED GLOBAL PROJECT STATE INITIALIZATION
+# UNIFIED GLOBAL PROJECT STATE
 # =====================================================
 
 if "rl_engine" not in st.session_state:
@@ -83,16 +69,28 @@ if "civilization_state" not in st.session_state:
     }
 
 # =====================================================
-# GLASSMORPHISM & ELITE UI POLISH CSS STYLING
+# MODULE REGISTRY
+# =====================================================
+
+categories = build_categories()
+module_mapping = build_module_mapping()
+
+flat_tab_labels = [
+    tab
+    for tabs in categories.values()
+    for tab in tabs
+]
+
+if st.session_state.active_tab not in flat_tab_labels:
+    st.session_state.active_tab = "Executive Cockpit"
+
+# =====================================================
+# GLOBAL UI / GLASSMORPHISM
 # =====================================================
 
 st.markdown(
     """
     <style>
-
-    /* =================================================
-       GLOBAL APPLICATION
-       ================================================= */
 
     .stApp {
         background:
@@ -111,10 +109,6 @@ st.markdown(
             Roboto,
             sans-serif;
     }
-
-    /* =================================================
-       STUDIOHOME SIDEBAR BRAND
-       ================================================= */
 
     .studio-logo-wrapper {
         display: flex;
@@ -160,19 +154,13 @@ st.markdown(
     .studio-logo-text {
         font-size: 24px;
         font-weight: 800;
-
         letter-spacing: -0.8px;
-
         color: #FFFFFF;
     }
 
     .studio-logo-text span {
         color: #3B82F6;
     }
-
-    /* =================================================
-       GLASS CARDS
-       ================================================= */
 
     .glass-card {
         background:
@@ -195,23 +183,13 @@ st.markdown(
             rgba(0, 0, 0, 0.45);
     }
 
-    /* =================================================
-       HEADINGS
-       ================================================= */
-
     h1,
     h2,
     h3 {
         letter-spacing: -0.6px;
-
         color: #F8FAFC !important;
-
         font-weight: 700 !important;
     }
-
-    /* =================================================
-       SIDEBAR
-       ================================================= */
 
     [data-testid="stSidebar"] {
         background-color:
@@ -220,10 +198,6 @@ st.markdown(
         border-right:
             1px solid rgba(255, 255, 255, 0.06);
     }
-
-    /* =================================================
-       BUTTONS
-       ================================================= */
 
     .stButton button {
         background:
@@ -241,8 +215,7 @@ st.markdown(
 
         font-weight: 600;
 
-        padding:
-            0.6rem 1.2rem;
+        padding: 0.6rem 1.2rem;
 
         box-shadow:
             0 4px 15px
@@ -322,79 +295,45 @@ with st.sidebar:
     )
 
 # =====================================================
-# NAVIGATION CATEGORIES
-# =====================================================
-
-categories = {
-    "Overview & Control": [
-        "Executive Cockpit",
-    ],
-
-    "Design & Engineering": [
-        "AI Brain",
-        "Architecture",
-        "Structure",
-        "MEP",
-        "GIS & Site",
-        "Cost",
-        "Massing",
-        "Zoning Code",
-        "Export Suite",
-        "Full Sim",
-    ],
-
-    "Urban & Civilization": [
-        "RL City",
-        "City Learning",
-        "Diplomacy",
-        "War",
-        "Culture",
-        "Consciousness",
-        "Meta-Evo",
-    ],
-}
-
-flat_tab_labels = [
-    tab
-    for tabs in categories.values()
-    for tab in tabs
-]
-
-# =====================================================
-# VALIDATE ACTIVE TAB
-# =====================================================
-
-if st.session_state.active_tab not in flat_tab_labels:
-    st.session_state.active_tab = "Executive Cockpit"
-
-# =====================================================
 # SIDEBAR NAVIGATION
 # =====================================================
+
+category_names = list(categories.keys())
+
+active_category = next(
+    (
+        category
+        for category, tabs in categories.items()
+        if st.session_state.active_tab in tabs
+    ),
+    "Overview & Control",
+)
 
 with st.sidebar:
 
     selected_category = st.selectbox(
         "Module Category",
-        list(categories.keys()),
-        index=0,
+        category_names,
+        index=category_names.index(active_category),
+        key="module_category",
         label_visibility="collapsed",
+    )
+
+    available_tabs = categories[selected_category]
+
+    current_tab_index = (
+        available_tabs.index(
+            st.session_state.active_tab
+        )
+        if st.session_state.active_tab in available_tabs
+        else 0
     )
 
     active_tab = st.radio(
         "Select panel",
-        categories[selected_category],
-
-        index=(
-            categories[selected_category].index(
-                st.session_state.active_tab
-            )
-            if st.session_state.active_tab
-            in categories[selected_category]
-            else 0
-        ),
-
+        available_tabs,
+        index=current_tab_index,
         key="tab_radio",
-
         label_visibility="collapsed",
     )
 
@@ -404,7 +343,8 @@ st.session_state.active_tab = active_tab
 # EXECUTIVE COCKPIT
 # =====================================================
 
-def render_executive_cockpit():
+def render_executive_cockpit() -> None:
+    """Render the executive project control center."""
 
     st.markdown(
         "## 🏛️ studiohome | Executive Project Cockpit"
@@ -418,7 +358,7 @@ def render_executive_cockpit():
         """
     )
 
-    p = st.session_state.project
+    project = st.session_state.project
 
     st.markdown(
         '<div class="glass-card">',
@@ -426,29 +366,29 @@ def render_executive_cockpit():
     )
 
     # =================================================
-    # KPI CARDS
+    # KPI ROW
     # =================================================
 
     c1, c2, c3, c4, c5 = st.columns(5)
 
     c1.metric(
         "Active Typology",
-        p["typology"].split()[0],
+        project["typology"].split()[0],
     )
 
     c2.metric(
         "Project CAPEX",
-        f"${p['estimated_cost']:,.0f}",
+        f"${project['estimated_cost']:,.0f}",
     )
 
     c3.metric(
         "Embodied Carbon",
-        f"{p['carbon_score']} tCO₂e",
+        f"{project['carbon_score']} tCO₂e",
     )
 
     c4.metric(
         "Storey Height",
-        f"{p['floors']} Levels",
+        f"{project['floors']} Levels",
     )
 
     c5.metric(
@@ -458,7 +398,7 @@ def render_executive_cockpit():
     )
 
     # =================================================
-    # TELEMETRY
+    # ECOSYSTEM TELEMETRY
     # =================================================
 
     st.markdown(
@@ -475,7 +415,6 @@ def render_executive_cockpit():
                 "Zoning Compliance",
                 "Cost Pro-Forma",
             ],
-
             "Performance Index (%)": [
                 98,
                 94,
@@ -489,30 +428,21 @@ def render_executive_cockpit():
 
     fig = px.bar(
         df_overview,
-
         x="Discipline Module",
-
         y="Performance Index (%)",
-
         color="Performance Index (%)",
-
         title=(
             "Unified Cross-Module "
             "Engineering Performance"
         ),
-
         template="plotly_dark",
-
         height=320,
-
         range_y=[80, 100],
     )
 
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
-
         plot_bgcolor="rgba(0,0,0,0)",
-
         margin=dict(
             t=40,
             b=10,
@@ -541,12 +471,9 @@ def render_executive_cockpit():
         if st.button(
             "📜 Run Zoning Code Audit",
             use_container_width=True,
+            key="cockpit_zoning",
         ):
-
-            st.session_state.active_tab = (
-                "Zoning Code"
-            )
-
+            st.session_state.active_tab = "Zoning Code"
             st.rerun()
 
     with col_b:
@@ -554,12 +481,9 @@ def render_executive_cockpit():
         if st.button(
             "⚡ Run Full Simulation Audit",
             use_container_width=True,
+            key="cockpit_full_sim",
         ):
-
-            st.session_state.active_tab = (
-                "Full Sim"
-            )
-
+            st.session_state.active_tab = "Full Sim"
             st.rerun()
 
     with col_c:
@@ -567,12 +491,9 @@ def render_executive_cockpit():
         if st.button(
             "📦 Export Unified BIM Suite",
             use_container_width=True,
+            key="cockpit_export",
         ):
-
-            st.session_state.active_tab = (
-                "Export Suite"
-            )
-
+            st.session_state.active_tab = "Export Suite"
             st.rerun()
 
     st.markdown(
@@ -580,32 +501,6 @@ def render_executive_cockpit():
         unsafe_allow_html=True,
     )
 
-# =====================================================
-# MODULE ROUTER
-# =====================================================
-
-module_mapping = {
-    "Executive Cockpit": None,
-
-    "AI Brain": ai_brain,
-    "Architecture": architecture,
-    "Structure": structure,
-    "MEP": mep,
-    "GIS & Site": gis_site,
-    "Cost": cost,
-    "Massing": massing,
-    "Zoning Code": zoning_code,
-    "Export Suite": export_suite,
-    "Full Sim": full_sim,
-
-    "RL City": rl_city,
-    "City Learning": city_learning,
-    "Diplomacy": diplomacy,
-    "War": war,
-    "Culture": culture,
-    "Consciousness": consciousness,
-    "Meta-Evo": meta_evo,
-}
 
 # =====================================================
 # ACTIVE MODULE RENDERING
@@ -615,12 +510,49 @@ if active_tab == "Executive Cockpit":
 
     render_executive_cockpit()
 
-elif (
-    active_tab in module_mapping
-    and module_mapping[active_tab]
-):
+elif active_tab in module_mapping:
 
-    module_mapping[active_tab].render()
+    module = module_mapping[active_tab]
+
+    if module is None:
+
+        st.warning(
+            f"Module '{active_tab}' is not configured."
+        )
+
+    else:
+
+        render = get_render_function(module)
+
+        if render is None:
+
+            st.error(
+                f"Module '{active_tab}' does not expose "
+                "a callable render() function."
+            )
+
+        else:
+
+            try:
+                render()
+
+            except Exception as exc:
+
+                st.error(
+                    f"Unable to render '{active_tab}'."
+                )
+
+                with st.expander(
+                    "Technical details",
+                    expanded=False,
+                ):
+                    st.exception(exc)
+
+else:
+
+    st.error(
+        f"Unknown module: '{active_tab}'"
+    )
 
 # =====================================================
 # SIDEBAR FOOTER
@@ -629,6 +561,5 @@ elif (
 st.sidebar.markdown("---")
 
 st.sidebar.caption(
-    f"Active Module: "
-    f"**{st.session_state.active_tab}**"
+    f"Active Module: **{st.session_state.active_tab}**"
 )
