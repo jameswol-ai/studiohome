@@ -3,10 +3,10 @@ import plotly.express as px
 import pandas as pd
 from rl_engine import RLCityEngine
 
-# Import individual modular panels
+# Import all individual modular panels including Zoning Code
 from modules import (
     ai_brain, architecture, structure, mep, gis_site, cost, massing,
-    export_suite, full_sim, rl_city, city_learning, diplomacy, war,
+    zoning_code, export_suite, full_sim, rl_city, city_learning, diplomacy, war,
     culture, consciousness, meta_evo
 )
 
@@ -29,7 +29,7 @@ if "project" not in st.session_state:
         "total_gfa": 30000.0,
         "estimated_cost": 49500000.0,
         "carbon_score": 420.0,
-        "energy_rating": "A+ Net-Zero"
+        "energy_rating": "LEED Platinum"
     }
 
 if "active_tab" not in st.session_state:
@@ -143,7 +143,7 @@ categories = {
     ],
     "Design & Engineering": [
         "AI Brain", "Architecture", "Structure", "MEP",
-        "GIS & Site", "Cost", "Massing", "Export Suite", "Full Sim"
+        "GIS & Site", "Cost", "Massing", "Zoning Code", "Export Suite", "Full Sim"
     ],
     "Urban & Civilization": [
         "RL City", "City Learning", "Diplomacy", "War",
@@ -174,17 +174,16 @@ with st.sidebar:
 st.session_state.active_tab = active_tab
 
 # =========================================================
-# EXECUTIVE COCKPIT VIEW (Connected to Shared Project State)
+# EXECUTIVE COCKPIT VIEW
 # =========================================================
 def render_executive_cockpit():
     st.markdown("## 🏛️ studiohome | Executive Project Cockpit")
-    st.markdown("Master control hub monitoring live multi-disciplinary parameters synced across all design and engineering agents.")
+    st.markdown("Master control hub monitoring live multi-disciplinary parameters synced across all design, engineering, and regulatory agents.")
     
     p = st.session_state.project
     
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     
-    # Dynamic Global Metrics linked to shared project state
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Active Typology", p["typology"].split()[0])
     c2.metric("Project CAPEX", f"${p['estimated_cost']:,.0f}")
@@ -195,8 +194,8 @@ def render_executive_cockpit():
     st.markdown("### 📊 Synchronized Ecosystem Telemetry")
     
     df_overview = pd.DataFrame({
-        "Discipline Module": ["AI Synthesis", "Architecture", "Structure (FEA)", "MEP & Energy", "Cost Pro-Forma", "Geospatial GIS"],
-        "Performance Index (%)": [98, 94, 96, 91, 93, 95]
+        "Discipline Module": ["AI Synthesis", "Architecture", "Structure (FEA)", "MEP & Energy", "Zoning Compliance", "Cost Pro-Forma"],
+        "Performance Index (%)": [98, 94, 96, 91, 100, 93]
     })
     
     fig = px.bar(df_overview, x="Discipline Module", y="Performance Index (%)", color="Performance Index (%)", 
@@ -207,8 +206,8 @@ def render_executive_cockpit():
     st.markdown("### 🚀 Quick Inter-Module Actions")
     col_a, col_b, col_c = st.columns(3)
     with col_a:
-        if st.button("🧠 Refine in AI Brain", use_container_width=True):
-            st.session_state.active_tab = "AI Brain"
+        if st.button("📜 Run Zoning Code Audit", use_container_width=True):
+            st.session_state.active_tab = "Zoning Code"
             st.rerun()
     with col_b:
         if st.button("⚡ Run Full Simulation Audit", use_container_width=True):
@@ -233,6 +232,7 @@ module_mapping = {
     "GIS & Site": gis_site,
     "Cost": cost,
     "Massing": massing,
+    "Zoning Code": zoning_code,
     "Export Suite": export_suite,
     "Full Sim": full_sim,
     "RL City": rl_city,
