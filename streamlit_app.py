@@ -5,18 +5,20 @@ Generative Architecture & Civil Engine
 
 from __future__ import annotations
 
-from modules.routing import get_quick_action_route
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 from rl_engine import RLCityEngine
+
 from modules.registry import (
     build_categories,
     build_module_mapping,
     get_render_function,
 )
+
+from modules.routing import get_quick_action_route
+
 
 # =====================================================
 # STREAMLIT PAGE CONFIGURATION
@@ -29,12 +31,14 @@ st.set_page_config(
     layout="wide",
 )
 
+
 # =====================================================
 # UNIFIED GLOBAL PROJECT STATE
 # =====================================================
 
 if "rl_engine" not in st.session_state:
     st.session_state.rl_engine = RLCityEngine()
+
 
 if "project" not in st.session_state:
     st.session_state.project = {
@@ -55,12 +59,15 @@ if "project" not in st.session_state:
         "energy_rating": "LEED Platinum",
     }
 
+
 if "active_tab" not in st.session_state:
     params = st.query_params
+
     st.session_state.active_tab = params.get(
         "tab",
         "Executive Cockpit",
     )
+
 
 if "civilization_state" not in st.session_state:
     st.session_state.civilization_state = {
@@ -70,12 +77,15 @@ if "civilization_state" not in st.session_state:
         "culture_score": 0.82,
     }
 
+
 # =====================================================
 # MODULE REGISTRY
 # =====================================================
 
 categories = build_categories()
+
 module_mapping = build_module_mapping()
+
 
 flat_tab_labels = [
     tab
@@ -83,8 +93,10 @@ flat_tab_labels = [
     for tab in tabs
 ]
 
+
 if st.session_state.active_tab not in flat_tab_labels:
     st.session_state.active_tab = "Executive Cockpit"
+
 
 # =====================================================
 # GLOBAL UI / GLASSMORPHISM
@@ -248,6 +260,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
 # =====================================================
 # SIDEBAR BRANDING
 # =====================================================
@@ -296,11 +309,13 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
+
 # =====================================================
 # SIDEBAR NAVIGATION
 # =====================================================
 
 category_names = list(categories.keys())
+
 
 active_category = next(
     (
@@ -310,6 +325,7 @@ active_category = next(
     ),
     "Overview & Control",
 )
+
 
 with st.sidebar:
 
@@ -323,6 +339,7 @@ with st.sidebar:
 
     available_tabs = categories[selected_category]
 
+
     current_tab_index = (
         available_tabs.index(
             st.session_state.active_tab
@@ -330,6 +347,7 @@ with st.sidebar:
         if st.session_state.active_tab in available_tabs
         else 0
     )
+
 
     active_tab = st.radio(
         "Select panel",
@@ -339,58 +357,43 @@ with st.sidebar:
         label_visibility="collapsed",
     )
 
+
 st.session_state.active_tab = active_tab
+
 
 # =====================================================
 # EXECUTIVE COCKPIT
 # =====================================================
 
-with col_a:
+def render_executive_cockpit() -> None:
+    """
+    Render the studiohome Executive Project Cockpit.
+    """
 
-    if st.button(
-        "📜 Run Zoning Code Audit",
-        use_container_width=True,
-        key="cockpit_zoning",
-    ):
-        destination = get_quick_action_route(
-            "zoning_audit"
-        )
+    st.markdown(
+        "## 🏛️ studiohome | Executive Project Cockpit"
+    )
 
-        if destination:
-            st.session_state.active_tab = destination
-            st.rerun()
+    st.markdown(
+        """
+        Master control hub monitoring live
+        multi-disciplinary parameters synced across
+        all design, engineering, and regulatory agents.
+        """
+    )
 
-
-with col_b:
-
-    if st.button(
-        "⚡ Run Full Simulation Audit",
-        use_container_width=True,
-        key="cockpit_full_sim",
-    ):
-        destination = get_quick_action_route(
-            "full_simulation"
-        )
-
-        if destination:
-            st.session_state.active_tab = destination
-            st.rerun()
+    project = st.session_state.project
 
 
-with col_c:
+    # =================================================
+    # GLASS CARD
+    # =================================================
 
-    if st.button(
-        "📦 Export Unified BIM Suite",
-        use_container_width=True,
-        key="cockpit_export",
-    ):
-        destination = get_quick_action_route(
-            "export_bim"
-        )
+    st.markdown(
+        '<div class="glass-card">',
+        unsafe_allow_html=True,
+    )
 
-        if destination:
-            st.session_state.active_tab = destination
-            st.rerun()
 
     # =================================================
     # KPI ROW
@@ -398,31 +401,37 @@ with col_c:
 
     c1, c2, c3, c4, c5 = st.columns(5)
 
+
     c1.metric(
         "Active Typology",
         project["typology"].split()[0],
     )
+
 
     c2.metric(
         "Project CAPEX",
         f"${project['estimated_cost']:,.0f}",
     )
 
+
     c3.metric(
         "Embodied Carbon",
         f"{project['carbon_score']} tCO₂e",
     )
+
 
     c4.metric(
         "Storey Height",
         f"{project['floors']} Levels",
     )
 
+
     c5.metric(
         "System Status",
         "Synchronized",
         "Live",
     )
+
 
     # =================================================
     # ECOSYSTEM TELEMETRY
@@ -431,6 +440,7 @@ with col_c:
     st.markdown(
         "### 📊 Synchronized Ecosystem Telemetry"
     )
+
 
     df_overview = pd.DataFrame(
         {
@@ -453,6 +463,7 @@ with col_c:
         }
     )
 
+
     fig = px.bar(
         df_overview,
         x="Discipline Module",
@@ -467,6 +478,7 @@ with col_c:
         range_y=[80, 100],
     )
 
+
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -478,10 +490,12 @@ with col_c:
         ),
     )
 
+
     st.plotly_chart(
         fig,
         use_container_width=True,
     )
+
 
     # =================================================
     # QUICK ACTIONS
@@ -491,7 +505,9 @@ with col_c:
         "### 🚀 Quick Inter-Module Actions"
     )
 
+
     col_a, col_b, col_c = st.columns(3)
+
 
     with col_a:
 
@@ -500,8 +516,15 @@ with col_c:
             use_container_width=True,
             key="cockpit_zoning",
         ):
-            st.session_state.active_tab = "Zoning Code"
-            st.rerun()
+
+            destination = get_quick_action_route(
+                "zoning_audit"
+            )
+
+            if destination:
+                st.session_state.active_tab = destination
+                st.rerun()
+
 
     with col_b:
 
@@ -510,8 +533,15 @@ with col_c:
             use_container_width=True,
             key="cockpit_full_sim",
         ):
-            st.session_state.active_tab = "Full Sim"
-            st.rerun()
+
+            destination = get_quick_action_route(
+                "full_simulation"
+            )
+
+            if destination:
+                st.session_state.active_tab = destination
+                st.rerun()
+
 
     with col_c:
 
@@ -520,8 +550,19 @@ with col_c:
             use_container_width=True,
             key="cockpit_export",
         ):
-            st.session_state.active_tab = "Export Suite"
-            st.rerun()
+
+            destination = get_quick_action_route(
+                "export_bim"
+            )
+
+            if destination:
+                st.session_state.active_tab = destination
+                st.rerun()
+
+
+    # =================================================
+    # CLOSE GLASS CARD
+    # =================================================
 
     st.markdown(
         "</div>",
@@ -537,9 +578,11 @@ if active_tab == "Executive Cockpit":
 
     render_executive_cockpit()
 
+
 elif active_tab in module_mapping:
 
     module = module_mapping[active_tab]
+
 
     if module is None:
 
@@ -547,9 +590,11 @@ elif active_tab in module_mapping:
             f"Module '{active_tab}' is not configured."
         )
 
+
     else:
 
         render = get_render_function(module)
+
 
         if render is None:
 
@@ -558,9 +603,11 @@ elif active_tab in module_mapping:
                 "a callable render() function."
             )
 
+
         else:
 
             try:
+
                 render()
 
             except Exception as exc:
@@ -575,17 +622,20 @@ elif active_tab in module_mapping:
                 ):
                     st.exception(exc)
 
+
 else:
 
     st.error(
         f"Unknown module: '{active_tab}'"
     )
 
+
 # =====================================================
 # SIDEBAR FOOTER
 # =====================================================
 
 st.sidebar.markdown("---")
+
 
 st.sidebar.caption(
     f"Active Module: **{st.session_state.active_tab}**"
