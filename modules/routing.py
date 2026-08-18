@@ -8,6 +8,10 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 
+# =====================================================
+# QUICK-ACTION ROUTES
+# =====================================================
+
 QUICK_ACTION_ROUTES: dict[str, str] = {
     "zoning_audit": "Zoning Code",
     "full_simulation": "Full Sim",
@@ -15,12 +19,25 @@ QUICK_ACTION_ROUTES: dict[str, str] = {
 }
 
 
+# =====================================================
+# ROUTE LOOKUP
+# =====================================================
+
 def get_quick_action_route(
     action: str,
 ) -> str | None:
-    """Return the destination for a registered action."""
+    """
+    Return the destination registered for a quick action.
+
+    Returns None if the action is not registered.
+    """
+
     return QUICK_ACTION_ROUTES.get(action)
 
+
+# =====================================================
+# ROUTE VALIDATION
+# =====================================================
 
 def validate_quick_action_route(
     action: str,
@@ -28,20 +45,41 @@ def validate_quick_action_route(
     flat_tab_labels: list[str] | tuple[str, ...],
 ) -> tuple[bool, str | None, str | None]:
     """
-    Validate a quick-action destination against the
-    application's live module registry.
+    Validate a quick-action route against the live module
+    registry.
+
+    Returns:
+
+        (
+            valid,
+            destination,
+            error_message,
+        )
     """
 
     destination = get_quick_action_route(action)
 
+    # -------------------------------------------------
+    # Missing route
+    # -------------------------------------------------
+
     if destination is None:
+
         return (
             False,
             None,
-            f"No quick-action route is registered for '{action}'.",
+            (
+                f"No quick-action route is registered "
+                f"for '{action}'."
+            ),
         )
 
+    # -------------------------------------------------
+    # Missing tab
+    # -------------------------------------------------
+
     if destination not in flat_tab_labels:
+
         return (
             False,
             destination,
@@ -52,7 +90,12 @@ def validate_quick_action_route(
             ),
         )
 
+    # -------------------------------------------------
+    # Missing module mapping
+    # -------------------------------------------------
+
     if destination not in module_mapping:
+
         return (
             False,
             destination,
@@ -63,7 +106,12 @@ def validate_quick_action_route(
             ),
         )
 
+    # -------------------------------------------------
+    # Empty module mapping
+    # -------------------------------------------------
+
     if module_mapping[destination] is None:
+
         return (
             False,
             destination,
@@ -74,4 +122,12 @@ def validate_quick_action_route(
             ),
         )
 
-    return True, destination, None
+    # -------------------------------------------------
+    # Valid
+    # -------------------------------------------------
+
+    return (
+        True,
+        destination,
+        None,
+    )
