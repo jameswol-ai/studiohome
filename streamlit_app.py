@@ -11,13 +11,31 @@ from modules import (
 )
 
 # =====================================================
-# SESSION STATE CONFIG
+# UNIFIED GLOBAL PROJECT STATE INITIALIZATION
 # =====================================================
 if "rl_engine" not in st.session_state:
     st.session_state.rl_engine = RLCityEngine()
+
+if "project" not in st.session_state:
+    st.session_state.project = {
+        "intent": "A cutting-edge net-zero carbon 12-storey hybrid mass-timber innovation hub",
+        "typology": "Commercial Innovation Hub",
+        "site_area": 2500.0,
+        "floors": 12,
+        "grid_spacing": 8.0,
+        "structural_system": "Mass Timber CLT & Glulam Frame",
+        "live_load": 4.0,
+        "unit_rate": 1650.0,
+        "total_gfa": 30000.0,
+        "estimated_cost": 49500000.0,
+        "carbon_score": 420.0,
+        "energy_rating": "A+ Net-Zero"
+    }
+
 if "active_tab" not in st.session_state:
     params = st.query_params
     st.session_state.active_tab = params.get("tab", "Executive Cockpit")
+
 if "civilization_state" not in st.session_state:
     st.session_state.civilization_state = {
         "stability": 0.91,
@@ -119,7 +137,6 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.markdown("<p style='font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; margin-bottom: 8px;'>Navigation Suite</p>", unsafe_allow_html=True)
 
-# Category Mapping Dictionary including Executive Cockpit
 categories = {
     "Overview & Control": [
         "Executive Cockpit"
@@ -157,47 +174,48 @@ with st.sidebar:
 st.session_state.active_tab = active_tab
 
 # =========================================================
-# EXECUTIVE COCKPIT VIEW
+# EXECUTIVE COCKPIT VIEW (Connected to Shared Project State)
 # =========================================================
 def render_executive_cockpit():
     st.markdown("## 🏛️ studiohome | Executive Project Cockpit")
-    st.markdown("Welcome to the master control hub. Monitor aggregate multi-disciplinary performance, active design synthesis, and civil AI agents in real time.")
+    st.markdown("Master control hub monitoring live multi-disciplinary parameters synced across all design and engineering agents.")
+    
+    p = st.session_state.project
     
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     
-    # Top-level Global Metrics
+    # Dynamic Global Metrics linked to shared project state
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Structural Integrity", "98.4%", "+0.6% Safe")
-    c2.metric("Project CAPEX", "$8.52M", "On Budget")
-    c3.metric("Embodied Carbon", "142 tCO₂e", "LEED Platinum")
-    c4.metric("Civic Stability", "91.0%", "Optimal")
-    c5.metric("AI Agent Status", "Active", "Autonomous")
+    c1.metric("Active Typology", p["typology"].split()[0])
+    c2.metric("Project CAPEX", f"${p['estimated_cost']:,.0f}")
+    c3.metric("Embodied Carbon", f"{p['carbon_score']} tCO₂e")
+    c4.metric("Storey Height", f"{p['floors']} Levels")
+    c5.metric("System Status", "Synchronized", "Live")
     
-    st.markdown("### 📊 Ecosystem Performance & Module Overview")
+    st.markdown("### 📊 Synchronized Ecosystem Telemetry")
     
-    # Interactive overview chart using Plotly
     df_overview = pd.DataFrame({
-        "Discipline Module": ["Architecture", "Structure", "MEP & Energy", "GIS & Site", "Cost Pro-Forma", "Massing"],
-        "Optimization Score (%)": [94, 98, 91, 95, 93, 96]
+        "Discipline Module": ["AI Synthesis", "Architecture", "Structure (FEA)", "MEP & Energy", "Cost Pro-Forma", "Geospatial GIS"],
+        "Performance Index (%)": [98, 94, 96, 91, 93, 95]
     })
     
-    fig = px.bar(df_overview, x="Discipline Module", y="Optimization Score (%)", color="Optimization Score (%)", 
-                 title="Multi-Disciplinary AI Optimization Index", template="plotly_dark", height=320, range_y=[80, 100])
+    fig = px.bar(df_overview, x="Discipline Module", y="Performance Index (%)", color="Performance Index (%)", 
+                 title="Unified Cross-Module Engineering Performance", template="plotly_dark", height=320, range_y=[80, 100])
     fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=40, b=10, l=10, r=10))
     st.plotly_chart(fig, use_container_width=True)
     
-    st.markdown("### 🚀 Quick Actions & System Health")
+    st.markdown("### 🚀 Quick Inter-Module Actions")
     col_a, col_b, col_c = st.columns(3)
     with col_a:
-        if st.button("🧠 Launch AI Design Synthesis", use_container_width=True):
+        if st.button("🧠 Refine in AI Brain", use_container_width=True):
             st.session_state.active_tab = "AI Brain"
             st.rerun()
     with col_b:
-        if st.button("⚡ Run Full Simulation Pipeline", use_container_width=True):
+        if st.button("⚡ Run Full Simulation Audit", use_container_width=True):
             st.session_state.active_tab = "Full Sim"
             st.rerun()
     with col_c:
-        if st.button("📦 Export OpenBIM Package", use_container_width=True):
+        if st.button("📦 Export Unified BIM Suite", use_container_width=True):
             st.session_state.active_tab = "Export Suite"
             st.rerun()
             
@@ -207,7 +225,7 @@ def render_executive_cockpit():
 # MODULE ROUTER MAPPING
 # =========================================================
 module_mapping = {
-    "Executive Cockpit": None, # handled inline
+    "Executive Cockpit": None,
     "AI Brain": ai_brain,
     "Architecture": architecture,
     "Structure": structure,
@@ -226,7 +244,6 @@ module_mapping = {
     "Meta-Evo": meta_evo
 }
 
-# Execute active panel render method
 if active_tab == "Executive Cockpit":
     render_executive_cockpit()
 elif active_tab in module_mapping and module_mapping[active_tab]:
