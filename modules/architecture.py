@@ -1,74 +1,51 @@
 import streamlit as st
-import pandas as pd
 import plotly.express as px
-import random
+import pandas as pd
+import numpy as np
 
 def render():
-    st.markdown("## 🏛️ Architecture AI — Generative Spatial Agent")
-    st.markdown("Collaborate with an autonomous architectural AI to synthesize program layouts, optimize circulation paths, and receive real-time spatial critiques.")
+    st.markdown("## 📐 Architecture & Spatial Layout Agent")
+    st.markdown("Generate and review spatial grid layouts, core riser positions, and functional zoning synchronized with your active project design.")
     
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     
-    # AI Prompt & Style Selector
-    ai_col1, ai_col2 = st.columns([2, 1])
-    with ai_col1:
-        arch_prompt = st.text_input(
-            "Architectural Intent Prompt",
-            value="A cascading biophilic innovation hub with fluid organic floorplates and maximum daylight penetration."
-        )
-    with ai_col2:
-        ai_style = st.selectbox("Design Paradigm AI", [
-            "Parametric Organic", 
-            "Neofuturistic Biophilic", 
-            "Rationalist Modular", 
-            "Deconstructivist Hybrid"
-        ])
+    # Read synchronized project state
+    p = st.session_state.project
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Active Typology", p["typology"])
+    with col2:
+        st.metric("Grid Module Spacing", f"{p['grid_spacing']}m x {p['grid_spacing']}m")
+    with col3:
+        st.metric("Total GFA", f"{p['total_gfa']:,.0f} m²")
         
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        grid_module = st.slider("Structural Grid Module (m)", 4.0, 12.0, 8.0, step=0.5)
-    with c2:
-        floor_plate_size = st.slider("Floorplate Extent (m)", 24, 80, 48, step=4)
-    with c3:
-        circulation_model = st.selectbox("Circulation Strategy", ["Atrium Core Ring", "Linear Spine", "Radial Hub", "Dual Anchor Banks"])
-
-    if st.button("🤖 Synthesize Architecture with AI", use_container_width=True):
-        st.success(f"✨ AI Model successfully generated floorplate layout using **{ai_style}** principles.")
-        
-        # AI Metrics Evaluation
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Daylight Factor", f"{random.uniform(3.2, 5.8):.1f}%", "+0.8% vs Baseline")
-        m2.metric("Circulation Efficiency", f"{random.randint(78, 94)}%", "Optimized")
-        m3.metric("Spatial Compactness", f"{random.uniform(1.15, 1.45):.2f}", "Balanced")
-        m4.metric("AI Confidence Score", f"{random.uniform(91.5, 98.8):.1f}%", "High")
-        
-        # Simulated Spatial Matrix
-        rows = int(floor_plate_size / grid_module)
-        cols = rows
-        matrix = []
-        for r in range(rows):
-            row_data = []
-            for c in range(cols):
-                if abs(r - rows/2) < 1.5 and abs(c - cols/2) < 1.5:
-                    zone = "🔒 Service Core"
-                elif r == 0 or r == rows - 1 or c == 0 or c == cols - 1:
-                    zone = "🌿 Biophilic Glazing Zone"
-                else:
-                    zone = f"🏢 Program Zone [{r},{c}]"
-                row_data.append(zone)
-            matrix.append(row_data)
-            
-        df_spatial = pd.DataFrame(matrix, columns=[f"X: {i*grid_module}m" for i in range(cols)], index=[f"Y: {i*grid_module}m" for i in range(rows)])
-        st.dataframe(df_spatial, use_container_width=True)
-        
-        # AI Architectural Critique / Recommendations
-        st.markdown("### 🧠 AI Design Agent Critique & Recommendations")
-        critiques = [
-            f"**Daylighting Optimization:** The perimeter glazing ratio successfully channels natural light up to {int(grid_module * 2.5)}m inward.",
-            f"**Circulation Flow:** The **{circulation_model}** reduces corridor transit congestion by 14% compared to standard cellular layouts.",
-            "**Material Synergy:** Recommended pairing with mass timber structural systems to lower embodied carbon footprint."
-        ]
-        for critique in critiques:
-            st.markdown(f"- {critique}")
-            
+    st.markdown("### 🏛️ Spatial Core & Zoning Configuration")
+    
+    # Interactive spatial distribution breakdown
+    zones_df = pd.DataFrame({
+        "Functional Zone": ["Core Circulation & Riser Shafts", "Primary Open Workspaces / Living", "Biophilic Atrium & Common Areas", "Service & MEP Plant"],
+        "Area Allocation (%)": [15.0, 55.0, 20.0, 10.0],
+        "Target Floor": [f"Levels 1–{p['floors']}", f"Levels 1–{p['floors']}", "Levels 1–3", f"Level {p['floors']} / Basement"]
+    })
+    
+    st.dataframe(zones_df, use_container_width=True)
+    
+    # Plotly Scatter/Grid simulation representing spatial nodes
+    grid_sz = int(p['grid_spacing'])
+    x_coords = np.arange(0, 40, grid_sz)
+    y_coords = np.arange(0, 40, grid_sz)
+    xx, yy = np.meshgrid(x_coords, y_coords)
+    
+    grid_df = pd.DataFrame({
+        "X": xx.flatten(),
+        "Y": yy.flatten(),
+        "Load Category": np.random.choice(["Core Column", "Perimeter Spandrel", "Atrium Void"], size=len(xx.flatten()), p=[0.6, 0.3, 0.1])
+    })
+    
+    fig = px.scatter(grid_df, x="X", y="Y", color="Load Category", title=f"Synchronized Structural Grid Layout ({p['grid_spacing']}m Module)", template="plotly_dark", height=320)
+    fig.update_traces(marker=dict(size=12, symbol="square"))
+    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=40, b=10, l=10, r=10))
+    st.plotly_chart(fig, use_container_width=True)
+    
     st.markdown('</div>', unsafe_allow_html=True)
