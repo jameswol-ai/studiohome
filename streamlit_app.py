@@ -5,6 +5,8 @@ Generative Architecture & Civil Engine
 
 from __future__ import annotations
 
+from modules.routing import get_quick_action_route
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
