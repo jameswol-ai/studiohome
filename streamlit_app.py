@@ -317,46 +317,186 @@ with st.sidebar:
 category_names = list(categories.keys())
 
 
-active_category = next(
-    (
-        category
-        for category, tabs in categories.items()
-        if st.session_state.active_tab in tabs
-    ),
-    "Overview & Control",
+def get_category_for_tab(tab: str) -> str:
+    """
+    Return the category containing the supplied tab.
+
+    Falls back safely to the first registered category.
+    """
+    for category, tabs in categories.items():
+        if tab in tabs:
+            return category
+
+    return category_names[0]
+
+
+def normalize_active_tab() -> None:
+    """
+    Ensure active_tab always points to a registered tab.
+    """
+    active_tab = st.session_state.get(
+        "active_tab",
+        "Executive Cockpit",
+    )
+
+    if active_tab not in flat_tab_labels:
+        st.session_state.active_tab = "Executive Cockpit"
+
+
+def sync_category_from_active_tab() -> None:
+    """
+    Synchronize the category widget with active_tab.
+    """
+    normalize_active_tab()
+
+    category = get_category_for_tab(
+        st.session_state.active_tab
+    )
+
+    st.session_state.module_category = category
+
+
+def on_category_change() -> None:
+    """
+    When the user changes category, select the first
+    valid tab in that category.
+    """
+    category = st.session_state.module_category
+
+    tabs = categories.get(category)
+
+    if not tabs:
+        return
+
+    current_tab = st.session_state.get(
+        "active_tab",
+        "Executive Cockpit",
+    )
+
+    # Keep the current tab if it belongs to the
+    # newly selected category.
+    if current_tab in tabs:
+        return
+
+    # Otherwise move to the first tab in the category.
+    st.session_state.active_tab = tabs[0]
+
+    # Keep the radio widget synchronized.
+    st.session_state.tab_radio = tabs[0]
+
+
+def on_tab_change() -> None:
+    """
+    When the radio changes, make active_tab the selected
+    tab and update the category accordingly.
+    """
+    selected_tab = st.session_state.tab_radio
+
+    if selected_tab not in flat_tab_labels:
+        return
+
+    st.session_state.active_tab = selected_tab
+
+    category = get_category_for_tab(selected_tab)
+
+    st.session_state.module_category = category
+
+
+# -----------------------------------------------------
+# Normalize state BEFORE creating widgets
+# -----------------------------------------------------
+
+normalize_active_tab()
+
+active_category = get_category_for_tab(
+    st.session_state.active_tab
 )
 
+
+# -----------------------------------------------------
+# Synchronize widget state BEFORE creating widgets
+# -----------------------------------------------------
+
+st.session_state.module_category = active_category
+
+st.session_state.tab_radio = (
+    st.session_state.active_tab
+)
+
+
+# -----------------------------------------------------
+# Render sidebar controls
+# -----------------------------------------------------
 
 with st.sidebar:
 
     selected_category = st.selectbox(
         "Module Category",
         category_names,
-        index=category_names.index(active_category),
+        index=category_names.index(
+            st.session_state.module_category
+        ),
         key="module_category",
+        on_change=on_category_change,
         label_visibility="collapsed",
     )
 
-    available_tabs = categories[selected_category]
+
+    available_tabs = categories.get(
+        selected_category,
+        [],
+    )
 
 
-    current_tab_index = (
-        available_tabs.index(
-            st.session_state.active_tab
+    # -------------------------------------------------
+    # Safety fallback
+    # -------------------------------------------------
+
+    if not available_tabs:
+
+        st.error(
+            f"No modules registered for "
+            f"category '{selected_category}'."
         )
-        if st.session_state.active_tab in available_tabs
-        else 0
-    )
+
+    else:
+
+        # If the active tab isn't part of the selected
+        # category, use the first valid tab.
+        if (
+            st.session_state.active_tab
+            not in available_tabs
+        ):
+            st.session_state.active_tab = (
+                available_tabs[0]
+            )
 
 
-    active_tab = st.radio(
-        "Select panel",
-        available_tabs,
-        index=current_tab_index,
-        key="tab_radio",
-        label_visibility="collapsed",
-    )
+        # Keep radio state valid.
+        if (
+            st.session_state.get("tab_radio")
+            not in available_tabs
+        ):
+            st.session_state.tab_radio = (
+                st.session_state.active_tab
+            )
 
+
+        active_tab = st.radio(
+            "Select panel",
+            available_tabs,
+            index=available_tabs.index(
+                st.session_state.active_tab
+            ),
+            key="tab_radio",
+            on_change=on_tab_change,
+            label_visibility="collapsed",
+        )
+
+
+# -----------------------------------------------------
+# Final synchronization
+# -----------------------------------------------------
 
 st.session_state.active_tab = active_tab
 
