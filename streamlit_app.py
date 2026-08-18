@@ -24,7 +24,7 @@ from modules.routing import (
 
 # =====================================================
 # STREAMLIT PAGE CONFIGURATION
-# Must be the first Streamlit command.
+# This MUST be the first Streamlit command.
 # =====================================================
 
 st.set_page_config(
@@ -35,14 +35,16 @@ st.set_page_config(
 
 
 # =====================================================
-# UNIFIED GLOBAL PROJECT STATE
+# GLOBAL PROJECT STATE
 # =====================================================
 
 if "rl_engine" not in st.session_state:
+
     st.session_state.rl_engine = RLCityEngine()
 
 
 if "project" not in st.session_state:
+
     st.session_state.project = {
         "intent": (
             "A cutting-edge net-zero carbon 12-storey "
@@ -52,7 +54,9 @@ if "project" not in st.session_state:
         "site_area": 2500.0,
         "floors": 12,
         "grid_spacing": 8.0,
-        "structural_system": "Mass Timber CLT & Glulam Frame",
+        "structural_system": (
+            "Mass Timber CLT & Glulam Frame"
+        ),
         "live_load": 4.0,
         "unit_rate": 1650.0,
         "total_gfa": 30000.0,
@@ -63,15 +67,19 @@ if "project" not in st.session_state:
 
 
 if "active_tab" not in st.session_state:
+
     params = st.query_params
 
-    st.session_state.active_tab = params.get(
+    requested_tab = params.get(
         "tab",
         "Executive Cockpit",
     )
 
+    st.session_state.active_tab = requested_tab
+
 
 if "civilization_state" not in st.session_state:
+
     st.session_state.civilization_state = {
         "stability": 0.91,
         "conflict": 0.12,
@@ -97,22 +105,33 @@ flat_tab_labels = [
 
 
 # =====================================================
-# ACTIVE TAB NORMALIZATION
+# NORMALIZE ACTIVE TAB
 # =====================================================
 
-if st.session_state.active_tab not in flat_tab_labels:
-    st.session_state.active_tab = "Executive Cockpit"
+if (
+    st.session_state.active_tab
+    not in flat_tab_labels
+):
+
+    st.session_state.active_tab = (
+        "Executive Cockpit"
+    )
 
 
 # =====================================================
-# GLOBAL UI / GLASSMORPHISM
+# GLOBAL CSS
 # =====================================================
 
 st.markdown(
     """
     <style>
 
+    /* =================================================
+       APPLICATION
+       ================================================= */
+
     .stApp {
+
         background:
             radial-gradient(
                 circle at 15% 15%,
@@ -130,22 +149,52 @@ st.markdown(
             sans-serif;
     }
 
+
+    /* =================================================
+       SIDEBAR
+       ================================================= */
+
+    [data-testid="stSidebar"] {
+
+        background:
+            rgba(11, 17, 32, 0.96);
+
+        border-right:
+            1px solid
+            rgba(255, 255, 255, 0.06);
+    }
+
+
+    /* =================================================
+       STUDIOHOME LOGO
+       ================================================= */
+
     .studio-logo-wrapper {
+
         display: flex;
+
         align-items: center;
+
         gap: 14px;
 
-        padding: 12px 0 20px 0;
+        padding:
+            12px 0 20px 0;
 
         border-bottom:
-            1px solid rgba(255, 255, 255, 0.08);
+            1px solid
+            rgba(255, 255, 255, 0.08);
 
         margin-bottom: 20px;
     }
 
+
     .studio-logo-icon {
+
         width: 42px;
+
         height: 42px;
+
+        min-width: 42px;
 
         background:
             linear-gradient(
@@ -157,7 +206,9 @@ st.markdown(
         border-radius: 12px;
 
         display: flex;
+
         align-items: center;
+
         justify-content: center;
 
         box-shadow:
@@ -165,32 +216,55 @@ st.markdown(
             rgba(59, 130, 246, 0.45);
     }
 
+
     .studio-logo-icon svg {
+
         width: 22px;
+
         height: 22px;
+
         fill: #FFFFFF;
     }
 
+
     .studio-logo-text {
+
         font-size: 24px;
+
         font-weight: 800;
+
         letter-spacing: -0.8px;
+
         color: #FFFFFF;
+
+        line-height: 1;
     }
 
+
     .studio-logo-text span {
+
         color: #3B82F6;
     }
 
-    .glass-card {
-        background:
-            rgba(30, 41, 59, 0.4);
 
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+    /* =================================================
+       GLASS CARD
+       ================================================= */
+
+    .glass-card {
+
+        background:
+            rgba(30, 41, 59, 0.40);
+
+        backdrop-filter:
+            blur(20px);
+
+        -webkit-backdrop-filter:
+            blur(20px);
 
         border:
-            1px solid rgba(255, 255, 255, 0.08);
+            1px solid
+            rgba(255, 255, 255, 0.08);
 
         border-radius: 18px;
 
@@ -199,27 +273,33 @@ st.markdown(
         margin-bottom: 24px;
 
         box-shadow:
-            0 12px 40px 0
+            0 12px 40px
             rgba(0, 0, 0, 0.45);
     }
+
+
+    /* =================================================
+       HEADINGS
+       ================================================= */
 
     h1,
     h2,
     h3 {
+
         letter-spacing: -0.6px;
+
         color: #F8FAFC !important;
+
         font-weight: 700 !important;
     }
 
-    [data-testid="stSidebar"] {
-        background-color:
-            rgba(11, 17, 32, 0.9);
 
-        border-right:
-            1px solid rgba(255, 255, 255, 0.06);
-    }
+    /* =================================================
+       BUTTONS
+       ================================================= */
 
     .stButton button {
+
         background:
             linear-gradient(
                 135deg,
@@ -227,7 +307,7 @@ st.markdown(
                 #2563EB
             );
 
-        color: white;
+        color: #FFFFFF;
 
         border: none;
 
@@ -235,17 +315,20 @@ st.markdown(
 
         font-weight: 600;
 
-        padding: 0.6rem 1.2rem;
+        padding:
+            0.6rem 1.2rem;
 
         box-shadow:
             0 4px 15px
-            rgba(59, 130, 246, 0.3);
+            rgba(59, 130, 246, 0.30);
 
         transition:
             all 0.25s ease-in-out;
     }
 
+
     .stButton button:hover {
+
         background:
             linear-gradient(
                 135deg,
@@ -255,7 +338,7 @@ st.markdown(
 
         box-shadow:
             0 6px 20px
-            rgba(59, 130, 246, 0.5);
+            rgba(59, 130, 246, 0.50);
 
         transform:
             translateY(-2px);
@@ -283,9 +366,23 @@ with st.sidebar:
                     viewBox="0 0 24 24"
                     aria-hidden="true"
                 >
+
                     <path d="
-                        M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z
+                        M12 3
+                        L2 12
+                        h3
+                        v8
+                        h6
+                        v-6
+                        h2
+                        v6
+                        h6
+                        v-8
+                        h3
+                        L12 3
+                        z
                     "/>
+
                 </svg>
 
             </div>
@@ -299,9 +396,10 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
+
     st.markdown(
         """
-        <p style="
+        <div style="
             font-size: 11px;
             color: #94A3B8;
             text-transform: uppercase;
@@ -310,29 +408,32 @@ with st.sidebar:
             margin-bottom: 8px;
         ">
             Navigation Suite
-        </p>
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
 
 # =====================================================
-# SIDEBAR NAVIGATION
+# SIDEBAR NAVIGATION HELPERS
 # =====================================================
 
-category_names = list(categories.keys())
+category_names = list(
+    categories.keys()
+)
 
 
-def get_category_for_tab(tab: str) -> str:
+def get_category_for_tab(
+    tab: str,
+) -> str:
     """
     Return the category containing a tab.
-
-    Falls back to the first category.
     """
 
     for category, tabs in categories.items():
 
         if tab in tabs:
+
             return category
 
     return category_names[0]
@@ -340,15 +441,16 @@ def get_category_for_tab(tab: str) -> str:
 
 def normalize_active_tab() -> None:
     """
-    Ensure active_tab always points to a registered tab.
+    Ensure active_tab always contains a valid
+    registered tab.
     """
 
-    active_tab_value = st.session_state.get(
+    active_tab = st.session_state.get(
         "active_tab",
         "Executive Cockpit",
     )
 
-    if active_tab_value not in flat_tab_labels:
+    if active_tab not in flat_tab_labels:
 
         st.session_state.active_tab = (
             "Executive Cockpit"
@@ -357,12 +459,15 @@ def normalize_active_tab() -> None:
 
 def on_category_change() -> None:
     """
-    Synchronize active_tab when the user changes category.
+    Synchronize active_tab when category changes.
     """
 
     category = st.session_state.module_category
 
-    tabs = categories.get(category, [])
+    tabs = categories.get(
+        category,
+        [],
+    )
 
     if not tabs:
         return
@@ -373,31 +478,42 @@ def on_category_change() -> None:
     )
 
     if current_tab in tabs:
+
         st.session_state.tab_radio = current_tab
+
         return
 
-    st.session_state.active_tab = tabs[0]
-    st.session_state.tab_radio = tabs[0]
+    first_tab = tabs[0]
+
+    st.session_state.active_tab = first_tab
+
+    st.session_state.tab_radio = first_tab
 
 
 def on_tab_change() -> None:
     """
-    Synchronize active_tab when the user changes module.
+    Synchronize category and active_tab when the
+    module radio changes.
     """
 
     selected_tab = st.session_state.tab_radio
 
     if selected_tab not in flat_tab_labels:
+
         return
 
     st.session_state.active_tab = selected_tab
 
-    category = get_category_for_tab(
-        selected_tab
+    st.session_state.module_category = (
+        get_category_for_tab(
+            selected_tab
+        )
     )
 
-    st.session_state.module_category = category
 
+# =====================================================
+# SYNCHRONIZE SIDEBAR STATE
+# =====================================================
 
 normalize_active_tab()
 
@@ -407,27 +523,33 @@ active_category = get_category_for_tab(
 )
 
 
-# -----------------------------------------------------
-# Synchronize widget state before rendering widgets.
-# -----------------------------------------------------
-
 if (
-    st.session_state.get("module_category")
+    st.session_state.get(
+        "module_category"
+    )
     not in category_names
 ):
+
     st.session_state.module_category = (
         active_category
     )
 
 
 if (
-    st.session_state.get("tab_radio")
+    st.session_state.get(
+        "tab_radio"
+    )
     not in flat_tab_labels
 ):
+
     st.session_state.tab_radio = (
         st.session_state.active_tab
     )
 
+
+# =====================================================
+# SIDEBAR CONTROLS
+# =====================================================
 
 with st.sidebar:
 
@@ -456,7 +578,9 @@ with st.sidebar:
             f"category '{selected_category}'."
         )
 
-        active_tab = st.session_state.active_tab
+        active_tab = (
+            st.session_state.active_tab
+        )
 
     else:
 
@@ -464,15 +588,19 @@ with st.sidebar:
             st.session_state.active_tab
             not in available_tabs
         ):
+
             st.session_state.active_tab = (
                 available_tabs[0]
             )
 
 
         if (
-            st.session_state.get("tab_radio")
+            st.session_state.get(
+                "tab_radio"
+            )
             not in available_tabs
         ):
+
             st.session_state.tab_radio = (
                 st.session_state.active_tab
             )
@@ -494,15 +622,17 @@ st.session_state.active_tab = active_tab
 
 
 # =====================================================
-# SAFE QUICK-ACTION NAVIGATION
+# SAFE QUICK-ACTION ROUTING
 # =====================================================
 
-def route_cockpit_action(action: str) -> None:
+def route_cockpit_action(
+    action: str,
+) -> None:
     """
     Validate and execute a cockpit quick action.
 
-    The application only calls st.rerun() after the
-    destination has passed both registry checks.
+    No rerun occurs until the destination is confirmed
+    against both flat_tab_labels and module_mapping.
     """
 
     (
@@ -516,10 +646,6 @@ def route_cockpit_action(action: str) -> None:
     )
 
 
-    # -------------------------------------------------
-    # Validation failure
-    # -------------------------------------------------
-
     if not valid:
 
         st.error(
@@ -530,14 +656,10 @@ def route_cockpit_action(action: str) -> None:
         return
 
 
-    # -------------------------------------------------
-    # Defensive destination check
-    # -------------------------------------------------
-
     if destination is None:
 
         st.error(
-            f"🚨 Quick-action '{action}' produced "
+            f"🚨 Quick-action '{action}' returned "
             "an empty destination."
         )
 
@@ -573,23 +695,35 @@ def route_cockpit_action(action: str) -> None:
         st.error(
             f"🚨 Cannot navigate to "
             f"'{destination}'. "
-            "The destination has no registered module."
+            "The destination has no registered "
+            "module."
         )
 
         return
 
 
     # -------------------------------------------------
-    # Commit navigation
+    # Synchronize navigation state
     # -------------------------------------------------
 
-    st.session_state.active_tab = destination
-
-    st.session_state.module_category = (
-        get_category_for_tab(destination)
+    st.session_state.active_tab = (
+        destination
     )
 
-    st.session_state.tab_radio = destination
+    st.session_state.module_category = (
+        get_category_for_tab(
+            destination
+        )
+    )
+
+    st.session_state.tab_radio = (
+        destination
+    )
+
+
+    # -------------------------------------------------
+    # Rerun only after successful validation
+    # -------------------------------------------------
 
     st.rerun()
 
@@ -606,6 +740,7 @@ def render_executive_cockpit() -> None:
     st.markdown(
         "## 🏛️ studiohome | Executive Project Cockpit"
     )
+
 
     st.markdown(
         """
@@ -668,7 +803,7 @@ def render_executive_cockpit() -> None:
 
 
     # =================================================
-    # ECOSYSTEM TELEMETRY
+    # TELEMETRY
     # =================================================
 
     st.markdown(
@@ -783,7 +918,7 @@ def render_executive_cockpit() -> None:
 
 
     # =================================================
-    # CLOSE GLASS CARD
+    # CLOSE CARD
     # =================================================
 
     st.markdown(
@@ -793,7 +928,7 @@ def render_executive_cockpit() -> None:
 
 
 # =====================================================
-# ACTIVE MODULE RENDERING
+# ACTIVE MODULE ROUTER
 # =====================================================
 
 if active_tab == "Executive Cockpit":
@@ -816,7 +951,9 @@ elif active_tab in module_mapping:
 
     else:
 
-        render = get_render_function(module)
+        render = get_render_function(
+            module
+        )
 
 
         if render is None:
@@ -860,7 +997,8 @@ else:
 
 st.sidebar.markdown("---")
 
-
 st.sidebar.caption(
-    f"Active Module: **{st.session_state.active_tab}**"
+    f"Active Module: **"
+    f"{st.session_state.active_tab}"
+    f"**"
 )
