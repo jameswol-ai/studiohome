@@ -1,16 +1,19 @@
 """
 Import-side-effect contract tests for studiohome modules.
 
-Each registered module is imported in a fresh subprocess.
+Every registered module is imported in a fresh Python subprocess.
 
-The subprocess rejects:
-- file writes
-- file deletion/renaming
+The subprocess blocks and reports:
+
+- file writes / filesystem mutation
 - environment mutation
+- subprocess creation
+- socket creation / connection
+- database client initialization
 - unexpected stdout
 - unexpected stderr
 
-The test does NOT import streamlit_app.py.
+The test deliberately does NOT import streamlit_app.py.
 """
 
 from __future__ import annotations
@@ -33,32 +36,37 @@ from __future__ import annotations
 import builtins
 import os
 import pathlib
+import socket
+import subprocess
 import sys
+import types
 
 
-module_name = sys.argv[1]
+MODULE_NAME = sys.argv[1]
 
 
 # =====================================================
-# FILE-SYSTEM WRITE GUARDS
+# DIAGNOSTIC FAILURE
+# =====================================================
+
+class ImportSideEffectViolation(RuntimeError):
+    """Raised when module import performs a blocked operation."""
+
+
+def blocked(category: str, operation: str):
+    raise ImportSideEffectViolation(
+        f"IMPORT_SIDE_EFFECT [{category}] "
+        f"module={MODULE_NAME!r} "
+        f"operation={operation}"
+    )
+
+
+# =====================================================
+# FILESYSTEM GUARDS
 # =====================================================
 
 _original_open = builtins.open
 _original_path_open = pathlib.Path.open
-_original_path_write_text = pathlib.Path.write_text
-_original_path_write_bytes = pathlib.Path.write_bytes
-_original_path_touch = pathlib.Path.touch
-_original_path_mkdir = pathlib.Path.mkdir
-_original_path_rmdir = pathlib.Path.rmdir
-_original_path_unlink = pathlib.Path.unlink
-_original_path_rename = pathlib.Path.rename
-_original_path_replace = pathlib.Path.replace
-
-
-def fail(operation):
-    raise RuntimeError(
-        f"IMPORT_SIDE_EFFECT: file operation blocked: {operation}"
-    )
 
 
 def guarded_open(
@@ -72,7 +80,10 @@ def guarded_open(
     opener=None,
 ):
     if any(flag in mode for flag in ("w", "a", "x", "+")):
-        fail(f"open({file!r}, mode={mode!r})")
+        blocked(
+            "FILESYSTEM",
+            f"open({file!r}, mode={mode!r})",
+        )
 
     return _original_open(
         file,
@@ -88,7 +99,10 @@ def guarded_open(
 
 def guarded_path_open(self, mode="r", *args, **kwargs):
     if any(flag in mode for flag in ("w", "a", "x", "+")):
-        fail(f"Path.open({self!r}, mode={mode!r})")
+        blocked(
+            "FILESYSTEM",
+            f"Path.open({self!r}, mode={mode!r})",
+        )
 
     return _original_path_open(
         self,
@@ -99,35 +113,59 @@ def guarded_path_open(self, mode="r", *args, **kwargs):
 
 
 def guarded_write_text(self, *args, **kwargs):
-    fail(f"Path.write_text({self!r})")
+    blocked(
+        "FILESYSTEM",
+        f"Path.write_text({self!r})",
+    )
 
 
 def guarded_write_bytes(self, *args, **kwargs):
-    fail(f"Path.write_bytes({self!r})")
+    blocked(
+        "FILESYSTEM",
+        f"Path.write_bytes({self!r})",
+    )
 
 
 def guarded_touch(self, *args, **kwargs):
-    fail(f"Path.touch({self!r})")
+    blocked(
+        "FILESYSTEM",
+        f"Path.touch({self!r})",
+    )
 
 
 def guarded_mkdir(self, *args, **kwargs):
-    fail(f"Path.mkdir({self!r})")
+    blocked(
+        "FILESYSTEM",
+        f"Path.mkdir({self!r})",
+    )
 
 
 def guarded_rmdir(self, *args, **kwargs):
-    fail(f"Path.rmdir({self!r})")
+    blocked(
+        "FILESYSTEM",
+        f"Path.rmdir({self!r})",
+    )
 
 
 def guarded_unlink(self, *args, **kwargs):
-    fail(f"Path.unlink({self!r})")
+    blocked(
+        "FILESYSTEM",
+        f"Path.unlink({self!r})",
+    )
 
 
 def guarded_rename(self, *args, **kwargs):
-    fail(f"Path.rename({self!r})")
+    blocked(
+        "FILESYSTEM",
+        f"Path.rename({self!r})",
+    )
 
 
 def guarded_replace(self, *args, **kwargs):
-    fail(f"Path.replace({self!r})")
+    blocked(
+        "FILESYSTEM",
+        f"Path.replace({self!r})",
+    )
 
 
 builtins.open = guarded_open
@@ -143,7 +181,7 @@ pathlib.Path.replace = guarded_replace
 
 
 # =====================================================
-# ENVIRONMENT MUTATION GUARDS
+# ENVIRONMENT GUARDS
 # =====================================================
 
 _original_putenv = os.putenv
@@ -151,11 +189,21 @@ _original_unsetenv = os.unsetenv
 
 
 def guarded_putenv(key, value):
-    fail(f"os.putenv({key!r}, ...)")
+    blocked(
+        "ENVIRONMENT",
+        f"os.putenv({key!r}, ...)",
+    )
 
 
 def guarded_unsetenv(key):
-    fail(f"os.unsetenv({key!r})")
+    blocked(
+        "ENVIRONMENT",
+        f"os.unsetenv({key!r})",
+    )
+
+
+os.putenv = guarded_putenv
+os.unsetenv = guarded_unsetenv
 
 
 _original_environ_setitem = os._Environ.__setitem__
@@ -163,17 +211,295 @@ _original_environ_delitem = os._Environ.__delitem__
 
 
 def guarded_environ_setitem(self, key, value):
-    fail(f"os.environ[{key!r}] = ...")
+    blocked(
+        "ENVIRONMENT",
+        f"os.environ[{key!r}] = ...",
+    )
 
 
 def guarded_environ_delitem(self, key):
-    fail(f"del os.environ[{key!r}]")
+    blocked(
+        "ENVIRONMENT",
+        f"del os.environ[{key!r}]",
+    )
 
 
-os.putenv = guarded_putenv
-os.unsetenv = guarded_unsetenv
 os._Environ.__setitem__ = guarded_environ_setitem
 os._Environ.__delitem__ = guarded_environ_delitem
+
+
+# =====================================================
+# SUBPROCESS GUARDS
+# =====================================================
+
+_original_popen = subprocess.Popen
+_original_run = subprocess.run
+_original_call = subprocess.call
+_original_check_call = subprocess.check_call
+_original_check_output = subprocess.check_output
+_original_getoutput = subprocess.getoutput
+_original_getstatusoutput = subprocess.getstatusoutput
+
+
+def guarded_popen(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"subprocess.Popen(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_run(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"subprocess.run(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_call(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"subprocess.call(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_check_call(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"subprocess.check_call(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_check_output(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"subprocess.check_output(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_getoutput(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"subprocess.getoutput(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_getstatusoutput(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"subprocess.getstatusoutput(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+subprocess.Popen = guarded_popen
+subprocess.run = guarded_run
+subprocess.call = guarded_call
+subprocess.check_call = guarded_check_call
+subprocess.check_output = guarded_check_output
+subprocess.getoutput = guarded_getoutput
+subprocess.getstatusoutput = guarded_getstatusoutput
+
+
+def guarded_system(command):
+    blocked(
+        "SUBPROCESS",
+        f"os.system({command!r})",
+    )
+
+
+def guarded_spawnv(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"os.spawnv(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_spawnve(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"os.spawnve(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_spawnvp(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"os.spawnvp(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_spawnvpe(*args, **kwargs):
+    blocked(
+        "SUBPROCESS",
+        f"os.spawnvpe(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+os.system = guarded_system
+os.spawnv = guarded_spawnv
+os.spawnve = guarded_spawnve
+os.spawnvp = guarded_spawnvp
+os.spawnvpe = guarded_spawnvpe
+
+
+# =====================================================
+# SOCKET GUARDS
+# =====================================================
+
+_original_socket = socket.socket
+_original_create_connection = socket.create_connection
+_original_create_server = socket.create_server
+
+
+class GuardedSocket:
+    """
+    Wrapper used to catch both socket creation and connect().
+    """
+
+    def __init__(self, *args, **kwargs):
+        blocked(
+            "SOCKET",
+            f"socket.socket(args={args!r}, kwargs={kwargs!r})",
+        )
+
+
+def guarded_socket(*args, **kwargs):
+    blocked(
+        "SOCKET",
+        f"socket.socket(args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_create_connection(*args, **kwargs):
+    blocked(
+        "SOCKET",
+        f"socket.create_connection("
+        f"args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+def guarded_create_server(*args, **kwargs):
+    blocked(
+        "SOCKET",
+        f"socket.create_server("
+        f"args={args!r}, kwargs={kwargs!r})",
+    )
+
+
+socket.socket = guarded_socket
+socket.create_connection = guarded_create_connection
+socket.create_server = guarded_create_server
+
+
+# =====================================================
+# DATABASE CLIENT GUARDS
+# =====================================================
+
+def database_blocked_factory(database_name: str):
+    def factory(*args, **kwargs):
+        blocked(
+            "DATABASE",
+            f"{database_name}("
+            f"args={args!r}, kwargs={kwargs!r})",
+        )
+
+    return factory
+
+
+# -----------------------------------------------------
+# sqlite3
+# -----------------------------------------------------
+
+try:
+    import sqlite3
+
+    sqlite3.connect = database_blocked_factory(
+        "sqlite3.connect"
+    )
+
+except ImportError:
+    pass
+
+
+# -----------------------------------------------------
+# psycopg / psycopg2
+# -----------------------------------------------------
+
+try:
+    import psycopg
+
+    psycopg.connect = database_blocked_factory(
+        "psycopg.connect"
+    )
+
+except ImportError:
+    pass
+
+
+try:
+    import psycopg2
+
+    psycopg2.connect = database_blocked_factory(
+        "psycopg2.connect"
+    )
+
+except ImportError:
+    pass
+
+
+# -----------------------------------------------------
+# MySQL
+# -----------------------------------------------------
+
+try:
+    import mysql.connector
+
+    mysql.connector.connect = database_blocked_factory(
+        "mysql.connector.connect"
+    )
+
+except ImportError:
+    pass
+
+
+try:
+    import pymysql
+
+    pymysql.connect = database_blocked_factory(
+        "pymysql.connect"
+    )
+
+except ImportError:
+    pass
+
+
+# -----------------------------------------------------
+# SQLAlchemy
+# -----------------------------------------------------
+
+try:
+    import sqlalchemy
+
+    sqlalchemy.create_engine = database_blocked_factory(
+        "sqlalchemy.create_engine"
+    )
+
+except ImportError:
+    pass
+
+
+# -----------------------------------------------------
+# MongoDB
+# -----------------------------------------------------
+
+try:
+    import pymongo
+
+    pymongo.MongoClient = database_blocked_factory(
+        "pymongo.MongoClient"
+    )
+
+except ImportError:
+    pass
 
 
 # =====================================================
@@ -187,9 +513,9 @@ class GuardedStream:
 
     def write(self, data):
         if data:
-            raise RuntimeError(
-                f"IMPORT_SIDE_EFFECT: unexpected {self.name}: "
-                f"{data!r}"
+            blocked(
+                "OUTPUT",
+                f"unexpected {self.name}: {data!r}",
             )
 
         return 0
@@ -204,35 +530,59 @@ class GuardedStream:
         return getattr(self.original, name)
 
 
-sys.stdout = GuardedStream(sys.stdout, "stdout")
-sys.stderr = GuardedStream(sys.stderr, "stderr")
+sys.stdout = GuardedStream(
+    sys.stdout,
+    "stdout",
+)
+
+sys.stderr = GuardedStream(
+    sys.stderr,
+    "stderr",
+)
 
 
 # =====================================================
-# IMPORT MODULE
+# IMPORT
 # =====================================================
 
 try:
-    __import__(module_name)
+    __import__(MODULE_NAME)
 
-except Exception as exc:
-    # Restore normal streams so pytest can receive the
-    # actual diagnostic from the subprocess.
+except ImportSideEffectViolation as exc:
+
+    # Restore the streams before emitting diagnostics.
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
 
     print(
-        f"{type(exc).__name__}: {exc}",
+        str(exc),
+        file=sys.stderr,
+    )
+
+    raise SystemExit(2)
+
+except Exception as exc:
+
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
+
+    print(
+        f"IMPORT_FAILURE "
+        f"module={MODULE_NAME!r} "
+        f"error={type(exc).__name__}: {exc}",
         file=sys.stderr,
     )
 
     raise SystemExit(1)
 
 else:
+
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
 
-    print(f"OK: {module_name}")
+    print(
+        f"OK: {MODULE_NAME}"
+    )
 """
 
 
@@ -241,8 +591,14 @@ else:
     MODULE_DEFINITIONS,
     ids=lambda definition: definition.name,
 )
-def test_registered_module_has_no_import_side_effects(definition):
-    """Registered modules must be side-effect-free at import time."""
+def test_registered_module_has_no_import_side_effects(
+    definition,
+):
+    """
+    Every registered module must import without causing
+    filesystem, environment, subprocess, socket, database,
+    stdout, or stderr side effects.
+    """
 
     result = subprocess.run(
         [
@@ -257,12 +613,18 @@ def test_registered_module_has_no_import_side_effects(definition):
         timeout=30,
     )
 
+    if result.returncode == 2:
+        pytest.fail(
+            f"\n{definition.name} has a blocked "
+            f"import-time side effect.\n\n"
+            f"{result.stderr.strip()}"
+        )
+
     if result.returncode != 0:
         pytest.fail(
-            f"{definition.name} produced an import-time "
-            "side effect or failed to import.\n\n"
-            f"stdout:\n{result.stdout}\n"
-            f"stderr:\n{result.stderr}"
+            f"\n{definition.name} failed during "
+            f"isolated import.\n\n"
+            f"{result.stderr.strip()}"
         )
 
     assert result.stdout.strip() == (
