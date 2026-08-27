@@ -1,37 +1,39 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-import random
 
 def render():
-    st.markdown("## ⚡ MEP & Environmental Systems AI Agent")
-    st.markdown("Autonomous mechanical and environmental intelligence agent dynamically sized to your active project floor area and typology.")
+    st.markdown("## ⚡ MEP & Building Energy Performance Agent")
+    st.markdown("Simulate HVAC loads, energy use intensity (EUI), renewable generation potential, and thermal comfort distributions.")
     
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     
-    # Read synchronized project state
     p = st.session_state.project
     
-    col_1, col_2, col_3 = st.columns(3)
-    col_1.metric("Conditioned Gross Floor Area", f"{p['total_gfa']:,.0f} m²")
-    col_2.metric("Active Building Typology", p["typology"].split()[0])
-    col_3.metric("Sustainability Standard", p["energy_rating"])
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        hvac_system = st.selectbox("HVAC Distribution System", ["VRF with Heat Recovery", "Chilled Beam & DOAS", "Geothermal Ground Source Heat Pump", "All-Air VAV System"])
+    with col2:
+        pv_coverage = st.slider("BIPV Rooftop Solar Coverage (%)", 0, 100, 75, step=5)
+    with col3:
+        target_leed = st.selectbox("Target Certification", ["LEED Platinum", "LEED Gold", "WELL Building Standard", "Net-Zero Carbon Certified"], index=0)
+        p['energy_rating'] = target_leed
+        
+    eui = round(75.0 - (pv_coverage * 0.25) - (15.0 if "Geothermal" in hvac_system else 5.0), 1)
     
-    cooling_load_kw = round(p['total_gfa'] * 0.095 + p['floors'] * 12.5, 1)
-    airflow_cfm = int(cooling_load_kw * 310)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Energy Use Intensity (EUI)", f"{eui} kWh/m²/yr", "-42% vs Baseline")
+    m2.metric("Annual PV Generation", f"{int(p['total_gfa'] * 0.18 * (pv_coverage/100)):,} kWh", "Renewable Offset")
+    m3.metric("Peak Cooling Load", f"{int(p['total_gfa'] * 0.085)} TR", "Optimized")
+    m4.metric("Certification Status", target_leed, "Verified Ready")
     
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Peak Cooling Capacity", f"{cooling_load_kw:,.1f} kW", "AI Optimized")
-    c2.metric("AHU Supply Air Volume", f"{airflow_cfm:,} m³/h")
-    c3.metric("Energy Use Intensity (EUI)", "52 kWh/m²a", "Net-Zero Ready")
-    
-    # Load breakdown chart synced with GFA
-    hvac_df = pd.DataFrame({
-        "Thermal Component": ["Envelope Conduction", "Internal Occupants", "Lighting & Plug Loads", "Ventilation Fresh Air"],
-        "Load Share (kW)": [cooling_load_kw*0.30, cooling_load_kw*0.28, cooling_load_kw*0.22, cooling_load_kw*0.20]
+    mep_df = pd.DataFrame({
+        "System Domain": ["Heating & Boiler", "Cooling & Chillers", "Ventilation (DOAS)", "Lighting & Plug Loads", "Renewable Generation"],
+        "Consumption Share (%)": [15, 30, 25, 20, -35]
     })
-    fig = px.pie(hvac_df, names="Thermal Component", values="Load Share (kW)", title=f"Thermal Load Distribution for {p['total_gfa']:,.0f} m² GFA", hole=0.45, template="plotly_dark")
-    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", height=280, margin=dict(t=35, b=10, l=10, r=10))
+    
+    fig = px.bar(mep_df, x="System Domain", y="Consumption Share (%)", color="System Domain", title="Annual Energy Balance & Load Distribution", template="plotly_dark", height=320)
+    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=40, b=10, l=10, r=10))
     st.plotly_chart(fig, use_container_width=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
