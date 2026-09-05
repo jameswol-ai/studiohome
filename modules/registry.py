@@ -8,6 +8,7 @@ from modules import (
     building_envelope,
     civil_works,
     consciousness,
+    cost,
     culture,
     city_learning,
     diplomacy,
