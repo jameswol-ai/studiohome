@@ -11,6 +11,7 @@ from modules import (
     cost,
     culture,
     city_learning,
+    design_generator,
     diplomacy,
     drawing_studio,
     electrical,
@@ -32,6 +33,7 @@ from modules import (
 
 
 CATEGORIES = {
+    "Design Generator": ["Residential Design", "Commercial Design", "Industrial Design"],
     "Project & Control": ["Executive Cockpit", "Project Setup", "AI Brain"],
     "Architecture & BIM": ["Architecture", "Massing", "Floorplate", "Drawing Studio", "Building Envelope", "Zoning Code", "Export Suite"],
     "Structural & Civil": ["Structure", "GIS & Site", "Civil Works"],
@@ -41,6 +43,9 @@ CATEGORIES = {
 }
 
 MODULE_MAPPING = {
+    "Residential Design": design_generator,
+    "Commercial Design": design_generator,
+    "Industrial Design": design_generator,
     "Executive Cockpit": None,
     "Project Setup": project_setup,
     "AI Brain": ai_brain,
