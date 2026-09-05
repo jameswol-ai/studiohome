@@ -73,85 +73,86 @@ def get_category_for_tab(tab: str) -> str:
     return category_names[0]
 
 
-def sync_navigation_state() -> None:
-    active = st.session_state.get("active_tab", EXECUTIVE_COCKPIT)
-    if active not in flat_tab_labels:
-        active = EXECUTIVE_COCKPIT
-        st.session_state.active_tab = active
-
-    category = get_category_for_tab(active)
-    if st.session_state.get("module_category") not in category_names:
-        st.session_state.module_category = category
-
-    tabs = categories.get(st.session_state.module_category, [])
-    if not tabs:
-        st.session_state.module_category = category
-        tabs = categories[category]
-
-    if st.session_state.get("tab_radio") not in tabs:
-        st.session_state.tab_radio = active if active in tabs else tabs[0]
+def navigate_to(tab: str) -> None:
+    if tab not in flat_tab_labels:
+        return
+    st.session_state.active_tab = tab
+    st.session_state.module_category = get_category_for_tab(tab)
+    st.session_state.tab_radio = tab
+    st.query_params["tab"] = tab
+    st.rerun()
 
 
-def on_category_change() -> None:
-    category = st.session_state.get("module_category")
-    tabs = categories.get(category, [])
-    if tabs:
-        selected = st.session_state.get("active_tab")
-        if selected not in tabs:
-            selected = tabs[0]
-        st.session_state.active_tab = selected
-        st.session_state.tab_radio = selected
+def route_cockpit_action(action: str) -> None:
+    valid, destination, error = validate_quick_action_route(
+        action, module_mapping, flat_tab_labels
+    )
+    if not valid:
+        st.error(f"Quick-action routing error: {error}")
+        return
+    navigate_to(destination)
 
 
-def on_tab_change() -> None:
-    selected = st.session_state.get("tab_radio")
-    if selected in flat_tab_labels:
-        st.session_state.active_tab = selected
-        st.session_state.module_category = get_category_for_tab(selected)
-        st.query_params["tab"] = selected
-
-
-sync_navigation_state()
+if st.session_state.active_tab not in flat_tab_labels:
+    st.session_state.active_tab = EXECUTIVE_COCKPIT
 
 
 st.markdown(
     """
     <style>
     :root {
-        --studio-black: #000000;
+        --studio-black: #111111;
         --studio-red: #D40000;
         --studio-white: #FFFFFF;
-        --studio-gray: #F7F7F7;
-        --studio-border: #CFCFCF;
+        --studio-gray: #F4F4F4;
+        --studio-border: #DDDDDD;
+        --studio-muted: #666666;
     }
 
-    .stApp,
-    [data-testid="stAppViewContainer"],
-    [data-testid="stMainBlockContainer"],
-    [data-testid="stHeader"] {
+    html, body, [data-testid="stAppViewContainer"], .stApp {
         background: var(--studio-white) !important;
         color: var(--studio-black) !important;
     }
 
-    [data-testid="stSidebar"],
+    [data-testid="stHeader"] {
+        background: var(--studio-white) !important;
+        border-bottom: 1px solid var(--studio-border);
+    }
+
+    [data-testid="stSidebar"] {
+        background: var(--studio-white) !important;
+        border-right: 1px solid var(--studio-border);
+    }
+
     [data-testid="stSidebar"] > div {
         background: var(--studio-white) !important;
-        border-right: 1px solid var(--studio-black);
     }
 
     .block-container {
-        padding-top: 1.25rem;
+        max-width: 1540px;
+        padding-top: 1.4rem;
         padding-bottom: 3rem;
-        max-width: 1500px;
+    }
+
+    h1, h2, h3, h4, h5, h6, p, label,
+    [data-testid="stMetricLabel"], [data-testid="stMetricValue"],
+    [data-testid="stMetricDelta"], [data-testid="stCaptionContainer"] {
+        color: var(--studio-black) !important;
+        text-shadow: none !important;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        letter-spacing: -0.45px;
+        text-shadow: none !important;
     }
 
     .studio-logo-wrapper {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 4px 0 16px;
-        margin-bottom: 14px;
-        border-bottom: 2px solid var(--studio-black);
+        padding: 2px 0 15px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--studio-border);
     }
 
     .studio-logo-icon {
@@ -159,7 +160,7 @@ st.markdown(
         height: 38px;
         min-width: 38px;
         background: var(--studio-red);
-        border-radius: 4px;
+        border-radius: 3px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -175,113 +176,176 @@ st.markdown(
         font-size: 23px;
         font-weight: 850;
         letter-spacing: -0.8px;
-        color: var(--studio-black) !important;
         line-height: 1;
+        color: var(--studio-black) !important;
+        text-shadow: none !important;
     }
 
     .studio-logo-text span { color: var(--studio-black) !important; }
 
-    .section-card {
-        background: var(--studio-white);
-        border: 1px solid var(--studio-border);
-        border-top: 3px solid var(--studio-black);
-        border-radius: 4px;
-        padding: 20px;
-        margin-bottom: 18px;
+    .sidebar-section-label {
+        margin: 18px 0 7px;
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--studio-muted) !important;
+        text-transform: uppercase;
+        letter-spacing: 1.4px;
     }
 
-    .section-title {
-        font-size: 17px;
+    .nav-category {
+        margin-top: 13px;
+        margin-bottom: 5px;
+        padding: 5px 0;
+        font-size: 10px;
+        font-weight: 850;
+        color: var(--studio-muted) !important;
+        text-transform: uppercase;
+        letter-spacing: 1.3px;
+        border-bottom: 1px solid #EEEEEE;
+    }
+
+    .nav-active-marker {
+        border-left: 3px solid var(--studio-red);
+        padding-left: 8px;
+        margin: 2px 0;
+    }
+
+    .nav-active-marker div {
+        font-size: 12px;
         font-weight: 800;
         color: var(--studio-black);
-        margin-bottom: 12px;
-        letter-spacing: -0.2px;
     }
 
-    h1, h2, h3, h4, h5, h6, p, label,
-    [data-testid="stMetricLabel"], [data-testid="stMetricValue"],
-    [data-testid="stMetricDelta"] {
+    .stButton > button {
+        min-height: 38px;
+        padding: 6px 12px;
+        background: var(--studio-white) !important;
         color: var(--studio-black) !important;
+        border: 1px solid transparent !important;
+        border-radius: 3px !important;
+        box-shadow: none !important;
+        font-weight: 650 !important;
+        text-align: left !important;
+        transition: background .12s ease, color .12s ease, border-color .12s ease;
     }
 
-    h1, h2, h3 { letter-spacing: -0.6px; }
-
-    [data-testid="stCaptionContainer"] { color: #444444 !important; }
-
-    [data-testid="stMetric"] {
-        border-left: 3px solid var(--studio-black);
-        padding-left: 10px;
+    .stButton > button:hover {
+        background: var(--studio-gray) !important;
+        color: var(--studio-red) !important;
+        border-color: #E8E8E8 !important;
+        box-shadow: none !important;
     }
 
-    .stButton button {
+    .main .stButton > button {
         background: var(--studio-black) !important;
         color: var(--studio-white) !important;
-        border: 1px solid var(--studio-black) !important;
-        border-radius: 3px !important;
-        font-weight: 750 !important;
-        min-height: 40px;
-        transition: background .15s ease, border-color .15s ease;
+        border-color: var(--studio-black) !important;
+        text-align: center !important;
     }
 
-    .stButton button:hover {
+    .main .stButton > button:hover {
         background: var(--studio-red) !important;
-        color: var(--studio-white) !important;
         border-color: var(--studio-red) !important;
+        color: var(--studio-white) !important;
     }
 
     [data-baseweb="select"] > div,
     [data-baseweb="input"] > div,
     [data-baseweb="textarea"] > div {
         background: var(--studio-white) !important;
-        border: 1px solid var(--studio-black) !important;
-        border-radius: 3px !important;
         color: var(--studio-black) !important;
+        border: 1px solid #BBBBBB !important;
+        border-radius: 3px !important;
+        box-shadow: none !important;
     }
 
     [data-baseweb="select"] *,
     [data-baseweb="input"] *,
     [data-baseweb="textarea"] * {
         color: var(--studio-black) !important;
+        text-shadow: none !important;
+    }
+
+    [data-testid="stMetric"] {
+        background: transparent !important;
+        border: 0 !important;
+        border-left: 3px solid var(--studio-black) !important;
+        border-radius: 0 !important;
+        padding: 5px 0 5px 11px !important;
+        box-shadow: none !important;
+    }
+
+    .section-card {
+        background: var(--studio-white);
+        border: 1px solid var(--studio-border);
+        border-top: 2px solid var(--studio-black);
+        border-radius: 2px;
+        padding: 18px;
+        margin-bottom: 16px;
+        box-shadow: none;
+    }
+
+    .section-title {
+        color: var(--studio-black) !important;
+        font-size: 16px;
+        font-weight: 800;
+        letter-spacing: -0.2px;
+        margin-bottom: 10px;
     }
 
     [data-testid="stAlert"] {
         background: var(--studio-white) !important;
         color: var(--studio-black) !important;
-        border: 1px solid var(--studio-black) !important;
-        border-radius: 3px !important;
+        border: 1px solid var(--studio-border) !important;
+        border-left: 3px solid var(--studio-red) !important;
+        border-radius: 2px !important;
     }
 
     [data-testid="stExpander"] {
         background: var(--studio-white) !important;
         border: 1px solid var(--studio-border) !important;
-        border-radius: 3px !important;
+        border-radius: 2px !important;
+        box-shadow: none !important;
     }
 
     [data-testid="stDataFrame"] {
-        border: 1px solid var(--studio-black);
-    }
-
-    [data-baseweb="tab-list"] button[aria-selected="true"] {
-        color: var(--studio-black) !important;
-        border-bottom-color: var(--studio-red) !important;
+        border: 1px solid var(--studio-border);
+        border-radius: 2px;
     }
 
     [data-testid="stProgressBar"] > div > div {
         background: var(--studio-red) !important;
     }
 
-    .status-pill {
-        display: inline-block;
-        padding: 5px 10px;
-        border: 1px solid var(--studio-black);
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .6px;
-        color: var(--studio-black);
-        background: var(--studio-white);
+    [data-testid="stMarkdownContainer"] a {
+        color: var(--studio-red) !important;
     }
+
+    hr {
+        border-color: var(--studio-border) !important;
+    }
+
+    .workspace-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 0 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--studio-border);
+    }
+
+    .workspace-module {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--studio-muted) !important;
+    }
+
+    .workspace-module strong {
+        color: var(--studio-black) !important;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -299,63 +363,42 @@ with st.sidebar:
             </div>
             <div class="studio-logo-text">studio<span>home</span></div>
         </div>
-        <div style="font-size:11px;color:#000000;text-transform:uppercase;letter-spacing:1.2px;font-weight:800;margin-bottom:8px;">
-            AEC + MEP Design Studio
-        </div>
+        <div class="sidebar-section-label">Workspace Navigation</div>
         """,
         unsafe_allow_html=True,
     )
 
-    selected_category = st.selectbox(
-        "Module Category",
-        category_names,
-        index=category_names.index(st.session_state.module_category),
-        key="module_category",
-        on_change=on_category_change,
-        label_visibility="collapsed",
-    )
-    available_tabs = categories.get(selected_category, [])
+    if st.button("Executive Cockpit", use_container_width=True, key="nav_cockpit"):
+        navigate_to(EXECUTIVE_COCKPIT)
 
-    if not available_tabs:
-        st.error(f"No modules registered for '{selected_category}'.")
-        active_tab = EXECUTIVE_COCKPIT
-    else:
-        if st.session_state.active_tab not in available_tabs:
-            st.session_state.active_tab = available_tabs[0]
-        if st.session_state.get("tab_radio") not in available_tabs:
-            st.session_state.tab_radio = st.session_state.active_tab
-        active_tab = st.radio(
-            "Select panel",
-            available_tabs,
-            index=available_tabs.index(st.session_state.active_tab),
-            key="tab_radio",
-            on_change=on_tab_change,
-            label_visibility="collapsed",
-        )
+    for category, tabs in categories.items():
+        st.markdown(f'<div class="nav-category">{category}</div>', unsafe_allow_html=True)
+        for tab in tabs:
+            if tab == EXECUTIVE_COCKPIT:
+                continue
+            if tab == st.session_state.active_tab:
+                st.markdown(
+                    f'<div class="nav-active-marker"><div>{tab}</div></div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                key = "nav_" + "_".join(tab.lower().split())
+                if st.button(tab, use_container_width=True, key=key):
+                    navigate_to(tab)
 
-    st.session_state.active_tab = active_tab
     st.markdown("---")
-    st.caption(f"Active Module: **{st.session_state.active_tab}**")
-
-
-def route_cockpit_action(action: str) -> None:
-    valid, destination, error = validate_quick_action_route(
-        action, module_mapping, flat_tab_labels
-    )
-    if not valid:
-        st.error(f"Quick-action routing error: {error}")
-        return
-    st.session_state.active_tab = destination
-    st.session_state.module_category = get_category_for_tab(destination)
-    st.session_state.tab_radio = destination
-    st.query_params["tab"] = destination
-    st.rerun()
+    st.caption(f"Current workspace: {st.session_state.active_tab}")
 
 
 def render_executive_cockpit() -> None:
     project = st.session_state.project
     family = project.get("design_family", "Commercial")
     status = project.get("design_status", "Concept Ready")
+
+    st.markdown(
+        f'<div class="workspace-bar"><div class="workspace-module">Workspace / <strong>{st.session_state.active_tab}</strong></div></div>',
+        unsafe_allow_html=True,
+    )
 
     top = st.columns([2.5, 1, 1, 1])
     with top[0]:
@@ -405,12 +448,12 @@ def render_executive_cockpit() -> None:
         fig.update_layout(
             paper_bgcolor="#FFFFFF",
             plot_bgcolor="#FFFFFF",
-            font=dict(color="#000000"),
+            font=dict(color="#111111"),
             margin=dict(t=20, b=10, l=10, r=10),
             showlegend=False,
         )
-        fig.update_xaxes(showgrid=False, tickfont=dict(color="#000000"))
-        fig.update_yaxes(gridcolor="#E5E5E5", tickfont=dict(color="#000000"))
+        fig.update_xaxes(showgrid=False, tickfont=dict(color="#111111"))
+        fig.update_yaxes(gridcolor="#E5E5E5", tickfont=dict(color="#111111"))
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -418,19 +461,14 @@ def render_executive_cockpit() -> None:
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">Design Families</div>', unsafe_allow_html=True)
         st.caption("Open a dedicated generator for each building family.")
-        family_buttons = [
+        for label, key in [
             ("Residential", "residential_design"),
             ("Commercial", "commercial_design"),
             ("Industrial", "industrial_design"),
-        ]
-        for label, key in family_buttons:
+        ]:
             if st.button(label, use_container_width=True, key=key):
-                st.session_state.active_tab = f"{label} Design"
-                st.session_state.module_category = "Design Generator"
-                st.session_state.tab_radio = f"{label} Design"
                 st.session_state.project["design_family"] = label
-                st.query_params["tab"] = f"{label} Design"
-                st.rerun()
+                navigate_to(f"{label} Design")
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
@@ -460,6 +498,8 @@ def render_executive_cockpit() -> None:
     st.markdown('</div>', unsafe_allow_html=True)
 
 
+active_tab = st.session_state.active_tab
+
 if active_tab == EXECUTIVE_COCKPIT:
     render_executive_cockpit()
 elif active_tab in module_mapping:
@@ -467,6 +507,10 @@ elif active_tab in module_mapping:
     if module is None:
         st.error(f"Module '{active_tab}' is registered but has no implementation.")
     else:
+        st.markdown(
+            f'<div class="workspace-bar"><div class="workspace-module">Workspace / <strong>{active_tab}</strong></div></div>',
+            unsafe_allow_html=True,
+        )
         render = get_render_function(module)
         if render is None:
             st.error(f"Module '{active_tab}' does not expose a callable render() function.")
