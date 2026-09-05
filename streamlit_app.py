@@ -1,6 +1,8 @@
 """studiohome | Architecture, Engineering, Construction + MEP design workspace."""
 from __future__ import annotations
 
+import re
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -16,6 +18,82 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+
+# Central UI sanitation: imported modules may still contain legacy emoji labels.
+# Strip them at the Streamlit boundary so the deployed application remains emoji-free.
+_EMOJI_RE = re.compile(
+    "["
+    "\\U0001F1E6-\\U0001F1FF"
+    "\\U0001F300-\\U0001F5FF"
+    "\\U0001F600-\\U0001F64F"
+    "\\U0001F680-\\U0001F6FF"
+    "\\U0001F700-\\U0001F77F"
+    "\\U0001F780-\\U0001F7FF"
+    "\\U0001F800-\\U0001F8FF"
+    "\\U0001F900-\\U0001F9FF"
+    "\\U0001FA00-\\U0001FAFF"
+    "\\U00002700-\\U000027BF"
+    "\\U00002600-\\U000026FF"
+    "\\U00002300-\\U000023FF"
+    "]+",
+    flags=re.UNICODE,
+)
+
+
+def _strip_emojis(value):
+    """Remove emoji and common pictographic symbols from UI text."""
+    if isinstance(value, str):
+        return _EMOJI_RE.sub("", value).strip()
+    return value
+
+
+def _wrap_streamlit_text_method(method):
+    """Wrap a Streamlit text-facing method without changing its API."""
+    def wrapper(*args, **kwargs):
+        cleaned_args = tuple(_strip_emojis(arg) for arg in args)
+        for key in ("label", "caption", "text", "body", "value", "help"):
+            if key in kwargs:
+                kwargs[key] = _strip_emojis(kwargs[key])
+        return method(*cleaned_args, **kwargs)
+
+    wrapper.__name__ = getattr(method, "__name__", "wrapped_streamlit_method")
+    return wrapper
+
+
+# Apply once per process. This protects the entire module registry, not only this file.
+if not getattr(st, "_studiohome_emoji_filter_installed", False):
+    for _method_name in (
+        "markdown",
+        "write",
+        "text",
+        "caption",
+        "title",
+        "header",
+        "subheader",
+        "button",
+        "checkbox",
+        "radio",
+        "selectbox",
+        "multiselect",
+        "text_input",
+        "text_area",
+        "number_input",
+        "slider",
+        "select_slider",
+        "date_input",
+        "time_input",
+        "metric",
+        "success",
+        "info",
+        "warning",
+        "error",
+        "exception",
+        "progress",
+    ):
+        if hasattr(st, _method_name):
+            setattr(st, _method_name, _wrap_streamlit_text_method(getattr(st, _method_name)))
+    st._studiohome_emoji_filter_installed = True
 
 
 if "rl_engine" not in st.session_state:
@@ -91,10 +169,6 @@ def route_cockpit_action(action: str) -> None:
         st.error(f"Quick-action routing error: {error}")
         return
     navigate_to(destination)
-
-
-if st.session_state.active_tab not in flat_tab_labels:
-    st.session_state.active_tab = EXECUTIVE_COCKPIT
 
 
 st.markdown(
