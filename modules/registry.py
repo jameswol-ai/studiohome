@@ -8,10 +8,10 @@ from modules import (
     building_envelope,
     civil_works,
     consciousness,
-    cost,
     culture,
     city_learning,
     diplomacy,
+    drawing_studio,
     electrical,
     export_suite,
     floorplate,
@@ -31,45 +31,13 @@ from modules import (
 
 
 CATEGORIES = {
-    "Project & Control": [
-        "Executive Cockpit",
-        "Project Setup",
-        "AI Brain",
-    ],
-    "Architecture & BIM": [
-        "Architecture",
-        "Massing",
-        "Floorplate",
-        "Building Envelope",
-        "Zoning Code",
-        "Export Suite",
-    ],
-    "Structural & Civil": [
-        "Structure",
-        "GIS & Site",
-        "Civil Works",
-    ],
-    "MEP & Building Systems": [
-        "MEP",
-        "Electrical",
-        "Plumbing & Fire",
-        "LCA Audit",
-    ],
-    "Cost, Delivery & Simulation": [
-        "Cost",
-        "Full Sim",
-    ],
-    "Urban & Intelligence": [
-        "RL City",
-        "City Learning",
-        "Diplomacy",
-        "War",
-        "Culture",
-        "Consciousness",
-        "Meta-Evo",
-    ],
+    "Project & Control": ["Executive Cockpit", "Project Setup", "AI Brain"],
+    "Architecture & BIM": ["Architecture", "Massing", "Floorplate", "Drawing Studio", "Building Envelope", "Zoning Code", "Export Suite"],
+    "Structural & Civil": ["Structure", "GIS & Site", "Civil Works"],
+    "MEP & Building Systems": ["MEP", "Electrical", "Plumbing & Fire", "LCA Audit"],
+    "Cost, Delivery & Simulation": ["Cost", "Full Sim"],
+    "Urban & Intelligence": ["RL City", "City Learning", "Diplomacy", "War", "Culture", "Consciousness", "Meta-Evo"],
 }
-
 
 MODULE_MAPPING = {
     "Executive Cockpit": None,
@@ -78,6 +46,7 @@ MODULE_MAPPING = {
     "Architecture": architecture,
     "Massing": massing,
     "Floorplate": floorplate,
+    "Drawing Studio": drawing_studio,
     "Building Envelope": building_envelope,
     "Zoning Code": zoning_code,
     "Export Suite": export_suite,
@@ -101,16 +70,13 @@ MODULE_MAPPING = {
 
 
 def build_categories():
-    """Return a fresh copy of the navigation categories."""
     return {category: list(tabs) for category, tabs in CATEGORIES.items()}
 
 
 def build_module_mapping():
-    """Return the registered module mapping."""
     return dict(MODULE_MAPPING)
 
 
 def get_render_function(module):
-    """Return a module's callable render function, if available."""
     render = getattr(module, "render", None)
     return render if callable(render) else None
