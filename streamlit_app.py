@@ -121,8 +121,8 @@ st.markdown(
         --studio-black: #000000;
         --studio-red: #D40000;
         --studio-white: #FFFFFF;
-        --studio-gray: #F4F4F4;
-        --studio-border: #D8D8D8;
+        --studio-gray: #F7F7F7;
+        --studio-border: #CFCFCF;
     }
 
     .stApp,
@@ -136,11 +136,11 @@ st.markdown(
     [data-testid="stSidebar"],
     [data-testid="stSidebar"] > div {
         background: var(--studio-white) !important;
-        border-right: 2px solid var(--studio-black);
+        border-right: 1px solid var(--studio-black);
     }
 
     .block-container {
-        padding-top: 2rem;
+        padding-top: 1.25rem;
         padding-bottom: 3rem;
         max-width: 1500px;
     }
@@ -148,26 +148,26 @@ st.markdown(
     .studio-logo-wrapper {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 8px 0 18px;
-        margin-bottom: 18px;
+        gap: 10px;
+        padding: 4px 0 16px;
+        margin-bottom: 14px;
         border-bottom: 2px solid var(--studio-black);
     }
 
     .studio-logo-icon {
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
         background: var(--studio-red);
-        border-radius: 8px;
+        border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .studio-logo-icon svg {
-        width: 22px;
-        height: 22px;
+        width: 21px;
+        height: 21px;
         fill: var(--studio-black);
     }
 
@@ -181,33 +181,21 @@ st.markdown(
 
     .studio-logo-text span { color: var(--studio-black) !important; }
 
-    .hero {
-        background: var(--studio-black);
-        color: var(--studio-white);
-        border-radius: 14px;
-        padding: 30px 34px;
-        margin-bottom: 22px;
-        border-left: 8px solid var(--studio-red);
-    }
-
-    .hero h1, .hero p, .hero span { color: var(--studio-white) !important; }
-    .hero h1 { margin: 0 0 7px 0; font-size: 34px; letter-spacing: -1.2px; }
-    .hero p { margin: 0; opacity: .86; }
-
     .section-card {
         background: var(--studio-white);
         border: 1px solid var(--studio-border);
-        border-top: 4px solid var(--studio-black);
-        border-radius: 12px;
-        padding: 22px;
-        margin-bottom: 20px;
+        border-top: 3px solid var(--studio-black);
+        border-radius: 4px;
+        padding: 20px;
+        margin-bottom: 18px;
     }
 
     .section-title {
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 800;
         color: var(--studio-black);
-        margin-bottom: 14px;
+        margin-bottom: 12px;
+        letter-spacing: -0.2px;
     }
 
     h1, h2, h3, h4, h5, h6, p, label,
@@ -216,15 +204,23 @@ st.markdown(
         color: var(--studio-black) !important;
     }
 
-    [data-testid="stCaptionContainer"] { color: #333333 !important; }
+    h1, h2, h3 { letter-spacing: -0.6px; }
+
+    [data-testid="stCaptionContainer"] { color: #444444 !important; }
+
+    [data-testid="stMetric"] {
+        border-left: 3px solid var(--studio-black);
+        padding-left: 10px;
+    }
 
     .stButton button {
         background: var(--studio-black) !important;
         color: var(--studio-white) !important;
-        border: 2px solid var(--studio-black) !important;
-        border-radius: 8px !important;
+        border: 1px solid var(--studio-black) !important;
+        border-radius: 3px !important;
         font-weight: 750 !important;
-        min-height: 42px;
+        min-height: 40px;
+        transition: background .15s ease, border-color .15s ease;
     }
 
     .stButton button:hover {
@@ -238,6 +234,7 @@ st.markdown(
     [data-baseweb="textarea"] > div {
         background: var(--studio-white) !important;
         border: 1px solid var(--studio-black) !important;
+        border-radius: 3px !important;
         color: var(--studio-black) !important;
     }
 
@@ -251,11 +248,13 @@ st.markdown(
         background: var(--studio-white) !important;
         color: var(--studio-black) !important;
         border: 1px solid var(--studio-black) !important;
+        border-radius: 3px !important;
     }
 
     [data-testid="stExpander"] {
         background: var(--studio-white) !important;
         border: 1px solid var(--studio-border) !important;
+        border-radius: 3px !important;
     }
 
     [data-testid="stDataFrame"] {
@@ -357,16 +356,6 @@ def render_executive_cockpit() -> None:
     project = st.session_state.project
     family = project.get("design_family", "Commercial")
     status = project.get("design_status", "Concept Ready")
-
-    st.markdown(
-        f"""
-        <div class="hero">
-            <h1>studiohome AEC + MEP Design Studio</h1>
-            <p>Integrated project control for architecture, engineering, construction, building systems, cost, simulation and documentation.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
     top = st.columns([2.5, 1, 1, 1])
     with top[0]:
