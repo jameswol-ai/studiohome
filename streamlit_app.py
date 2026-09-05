@@ -47,26 +47,26 @@ sync_navigation_state()
 
 st.markdown("""
 <style>
-:root { --studio-red:#D40000; --studio-red-bright:#FF0000; --studio-black:#050505; }
-.stApp { background:var(--studio-red); color:#000000; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-[data-testid="stSidebar"] { background:var(--studio-red); border-right:2px solid #000000; }
-.studio-logo-wrapper { display:flex;align-items:center;gap:14px;padding:12px 0 20px;margin-bottom:20px;border-bottom:2px solid #000000; }
-.studio-logo-icon { width:42px;height:42px;min-width:42px;background:#000000;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:none; }
-.studio-logo-icon svg { width:22px;height:22px;fill:var(--studio-red); }
+:root { --studio-black:#000000; --studio-red:#D40000; }
+.stApp { background:var(--studio-black); color:#000000; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+[data-testid="stSidebar"] { background:var(--studio-black); border-right:2px solid var(--studio-red); }
+.studio-logo-wrapper { display:flex;align-items:center;gap:14px;padding:12px 0 20px;margin-bottom:20px;border-bottom:2px solid var(--studio-red); }
+.studio-logo-icon { width:42px;height:42px;min-width:42px;background:var(--studio-red);border-radius:12px;display:flex;align-items:center;justify-content:center; }
+.studio-logo-icon svg { width:22px;height:22px;fill:#000000; }
 .studio-logo-text { font-size:24px;font-weight:800;letter-spacing:-.8px;color:#000000;line-height:1; }
 .studio-logo-text span { color:#000000; }
-.glass-card { background:var(--studio-red);border:2px solid #000000;border-radius:18px;padding:28px;margin-bottom:24px;box-shadow:none; }
+.glass-card { background:var(--studio-black);border:2px solid var(--studio-red);border-radius:18px;padding:28px;margin-bottom:24px;box-shadow:none; }
 h1,h2,h3,h4,h5,h6,p,span,label,div { color:#000000; }
 .stCaption,[data-testid="stCaptionContainer"] { color:#000000 !important; }
-.stButton button { background:#000000;color:var(--studio-red);border:2px solid #000000;border-radius:10px;font-weight:800;padding:.6rem 1.2rem;box-shadow:none; }
-.stButton button:hover { background:var(--studio-red);color:#000000;border-color:#000000; }
-[data-baseweb="select"] > div, [data-baseweb="input"] > div, [data-baseweb="textarea"] > div { background:var(--studio-red);border-color:#000000;color:#000000; }
+.stButton button { background:var(--studio-red);color:#000000;border:2px solid var(--studio-red);border-radius:10px;font-weight:800;padding:.6rem 1.2rem;box-shadow:none; }
+.stButton button:hover { background:#000000;color:#000000;border-color:var(--studio-red); }
+[data-baseweb="select"] > div, [data-baseweb="input"] > div, [data-baseweb="textarea"] > div { background:#000000;border:2px solid var(--studio-red);color:#000000; }
 [data-baseweb="select"] *, [data-baseweb="input"] *, [data-baseweb="textarea"] * { color:#000000 !important; }
 [data-testid="stMetricValue"], [data-testid="stMetricLabel"], [data-testid="stMetricDelta"] { color:#000000 !important; }
 [data-baseweb="tab-list"] button[aria-selected="true"] { color:#000000 !important; background:var(--studio-red); }
-[data-testid="stAlert"] { background:var(--studio-red);border:2px solid #000000;color:#000000; }
-[data-testid="stExpander"] { background:var(--studio-red);border:2px solid #000000; }
-.stDataFrame { border:2px solid #000000; }
+[data-testid="stAlert"] { background:#000000;border:2px solid var(--studio-red);color:#000000; }
+[data-testid="stExpander"] { background:#000000;border:2px solid var(--studio-red); }
+.stDataFrame { border:2px solid var(--studio-red); }
 </style>
 """,unsafe_allow_html=True)
 
@@ -97,7 +97,7 @@ def render_executive_cockpit():
     c1,c2,c3,c4,c5=st.columns(5); c1.metric("Project",project.get("project_name","AEC Project")); c2.metric("GFA",f"{project.get('total_gfa',0):,.0f} m²"); c3.metric("CAPEX",f"${project.get('estimated_cost',0):,.0f}"); c4.metric("Storeys",str(project.get("floors",0))); c5.metric("Design Status","Coordinated","Live")
     st.markdown("### Multidisciplinary Design Readiness")
     df=pd.DataFrame({"Discipline":["Architecture","Structure","Civil","Mechanical","Electrical","Plumbing / Fire","BIM / Export","Cost"],"Readiness (%)":[94,96,89,91,90,88,92,93]})
-    fig=px.bar(df,x="Discipline",y="Readiness (%)",color_discrete_sequence=["#000000"],range_y=[75,100],template="plotly_white",height=340); fig.update_layout(paper_bgcolor="#D40000",plot_bgcolor="#D40000",font=dict(color="#000000"),margin=dict(t=30,b=10,l=10,r=10)); st.plotly_chart(fig,use_container_width=True)
+    fig=px.bar(df,x="Discipline",y="Readiness (%)",color_discrete_sequence=["#D40000"],range_y=[75,100],template="plotly_dark",height=340); fig.update_layout(paper_bgcolor="#000000",plot_bgcolor="#000000",font=dict(color="#000000"),margin=dict(t=30,b=10,l=10,r=10)); st.plotly_chart(fig,use_container_width=True)
     st.markdown("### Design Coordination Shortcuts")
     b1,b2,b3,b4=st.columns(4)
     with b1:
