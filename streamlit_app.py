@@ -47,44 +47,33 @@ sync_navigation_state()
 
 st.markdown("""
 <style>
-:root { color-scheme: dark; }
-.stApp { background:#000000; color:#D40000; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-[data-testid="stAppViewContainer"], [data-testid="stHeader"] { background:#000000; }
-[data-testid="stSidebar"] { background:#000000; border-right:1px solid #440000; }
-[data-testid="stSidebar"] * { color:#D40000 !important; }
-.studio-logo-wrapper { display:flex;align-items:center;gap:14px;padding:12px 0 20px;margin-bottom:20px;border-bottom:1px solid #440000; }
-.studio-logo-icon { width:42px;height:42px;min-width:42px;background:#D40000;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(212,0,0,.45); }
-.studio-logo-icon svg { width:22px;height:22px;fill:#000000; }
-.studio-logo-text { font-size:24px;font-weight:800;letter-spacing:-.8px;color:#D40000;line-height:1; }
-.studio-logo-text span { color:#FF0000; }
-.glass-card { background:#080000;border:1px solid #440000;border-radius:18px;padding:28px;margin-bottom:24px;box-shadow:0 12px 40px rgba(212,0,0,.12); }
-h1,h2,h3,h4,h5,h6,p,label,span,div { color:#D40000; }
-h1,h2,h3,h4,h5,h6 { letter-spacing:-.6px;color:#FF0000 !important;font-weight:700 !important; }
-.stCaption, [data-testid="stCaptionContainer"] { color:#A80000 !important; }
-.stButton button { background:#D40000;color:#000000 !important;border:1px solid #FF0000;border-radius:10px;font-weight:700;padding:.6rem 1.2rem;box-shadow:0 4px 15px rgba(212,0,0,.25); }
-.stButton button:hover { background:#FF0000;color:#000000 !important;border-color:#FF0000; }
-.stButton button p { color:#000000 !important; }
-[data-baseweb="tab-list"] button { color:#A80000 !important; }
-[data-baseweb="tab-list"] button[aria-selected="true"] { color:#FF0000 !important; }
-[data-testid="stMetricValue"] { color:#FF0000 !important; }
-[data-testid="stMetricLabel"] { color:#A80000 !important; }
-[data-testid="stMetricDelta"] { color:#D40000 !important; }
-input, textarea { background:#000000 !important;color:#D40000 !important;border-color:#440000 !important; }
-input::placeholder, textarea::placeholder { color:#700000 !important; }
-[data-baseweb="select"] > div, [data-baseweb="input"] > div { background:#000000 !important;border-color:#440000 !important;color:#D40000 !important; }
-[data-baseweb="select"] *, [data-baseweb="input"] * { color:#D40000 !important; }
-[data-baseweb="popover"] *, [role="listbox"] *, [role="option"] * { background:#000000 !important;color:#D40000 !important; }
-[data-testid="stDataFrame"] { border:1px solid #440000; }
-[data-testid="stAlert"] { background:#080000 !important;border-color:#440000 !important;color:#D40000 !important; }
-[data-testid="stExpander"] { background:#080000 !important;border-color:#440000 !important; }
-hr { border-color:#440000 !important; }
+:root { --studio-red:#D40000; --studio-red-bright:#FF0000; --studio-black:#050505; }
+.stApp { background:var(--studio-red); color:#000000; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+[data-testid="stSidebar"] { background:var(--studio-red); border-right:2px solid #000000; }
+.studio-logo-wrapper { display:flex;align-items:center;gap:14px;padding:12px 0 20px;margin-bottom:20px;border-bottom:2px solid #000000; }
+.studio-logo-icon { width:42px;height:42px;min-width:42px;background:#000000;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:none; }
+.studio-logo-icon svg { width:22px;height:22px;fill:var(--studio-red); }
+.studio-logo-text { font-size:24px;font-weight:800;letter-spacing:-.8px;color:#000000;line-height:1; }
+.studio-logo-text span { color:#000000; }
+.glass-card { background:var(--studio-red);border:2px solid #000000;border-radius:18px;padding:28px;margin-bottom:24px;box-shadow:none; }
+h1,h2,h3,h4,h5,h6,p,span,label,div { color:#000000; }
+.stCaption,[data-testid="stCaptionContainer"] { color:#000000 !important; }
+.stButton button { background:#000000;color:var(--studio-red);border:2px solid #000000;border-radius:10px;font-weight:800;padding:.6rem 1.2rem;box-shadow:none; }
+.stButton button:hover { background:var(--studio-red);color:#000000;border-color:#000000; }
+[data-baseweb="select"] > div, [data-baseweb="input"] > div, [data-baseweb="textarea"] > div { background:var(--studio-red);border-color:#000000;color:#000000; }
+[data-baseweb="select"] *, [data-baseweb="input"] *, [data-baseweb="textarea"] * { color:#000000 !important; }
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"], [data-testid="stMetricDelta"] { color:#000000 !important; }
+[data-baseweb="tab-list"] button[aria-selected="true"] { color:#000000 !important; background:var(--studio-red); }
+[data-testid="stAlert"] { background:var(--studio-red);border:2px solid #000000;color:#000000; }
+[data-testid="stExpander"] { background:var(--studio-red);border:2px solid #000000; }
+.stDataFrame { border:2px solid #000000; }
 </style>
 """,unsafe_allow_html=True)
 
 with st.sidebar:
     st.markdown("""
     <div class="studio-logo-wrapper"><div class="studio-logo-icon"><svg viewBox="0 0 24 24"><path d="M12 3 L2 12 h3 v8 h6 v-6 h2 v6 h6 v-8 h3 L12 3 z"/></svg></div><div class="studio-logo-text">studio<span>home</span></div></div>
-    <div style="font-size:11px;color:#A80000;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:8px;">AEC + MEP Design Studio</div>
+    <div style="font-size:11px;color:#000000;text-transform:uppercase;letter-spacing:1.2px;font-weight:800;margin-bottom:8px;">AEC + MEP Design Studio</div>
     """,unsafe_allow_html=True)
     selected_category=st.selectbox("Module Category",category_names,index=category_names.index(st.session_state.module_category),key="module_category",on_change=on_category_change,label_visibility="collapsed")
     available_tabs=categories.get(selected_category,[])
@@ -108,7 +97,7 @@ def render_executive_cockpit():
     c1,c2,c3,c4,c5=st.columns(5); c1.metric("Project",project.get("project_name","AEC Project")); c2.metric("GFA",f"{project.get('total_gfa',0):,.0f} m²"); c3.metric("CAPEX",f"${project.get('estimated_cost',0):,.0f}"); c4.metric("Storeys",str(project.get("floors",0))); c5.metric("Design Status","Coordinated","Live")
     st.markdown("### Multidisciplinary Design Readiness")
     df=pd.DataFrame({"Discipline":["Architecture","Structure","Civil","Mechanical","Electrical","Plumbing / Fire","BIM / Export","Cost"],"Readiness (%)":[94,96,89,91,90,88,92,93]})
-    fig=px.bar(df,x="Discipline",y="Readiness (%)",color_discrete_sequence=["#E00000"],range_y=[75,100],template="plotly_dark",height=340); fig.update_layout(paper_bgcolor="#000000",plot_bgcolor="#000000",font=dict(color="#D40000"),margin=dict(t=30,b=10,l=10,r=10)); st.plotly_chart(fig,use_container_width=True)
+    fig=px.bar(df,x="Discipline",y="Readiness (%)",color_discrete_sequence=["#000000"],range_y=[75,100],template="plotly_white",height=340); fig.update_layout(paper_bgcolor="#D40000",plot_bgcolor="#D40000",font=dict(color="#000000"),margin=dict(t=30,b=10,l=10,r=10)); st.plotly_chart(fig,use_container_width=True)
     st.markdown("### Design Coordination Shortcuts")
     b1,b2,b3,b4=st.columns(4)
     with b1:
