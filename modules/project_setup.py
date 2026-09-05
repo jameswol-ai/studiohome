@@ -7,7 +7,7 @@ import streamlit as st
 
 def render() -> None:
     """Render the project setup workspace."""
-    st.markdown("## 🧭 Project Setup & AEC Design Brief")
+    st.markdown("## Project Setup & AEC Design Brief")
     st.caption("Define the project brief, site parameters, performance targets, and delivery assumptions used by downstream design modules.")
 
     p = st.session_state.project
@@ -18,26 +18,20 @@ def render() -> None:
             p["project_name"] = st.text_input("Project Name", p.get("project_name", "studiohome AEC Project"))
             p["client"] = st.text_input("Client / Developer", p.get("client", "Studiohome Development"))
         with c2:
+            typologies = [
+                "Commercial Innovation Hub",
+                "Mixed-Use Development",
+                "Residential Tower",
+                "Healthcare Facility",
+                "Education Campus",
+                "Industrial / Logistics Facility",
+                "Civic / Institutional Building",
+            ]
+            current_typology = p.get("typology", "Commercial Innovation Hub")
             p["typology"] = st.selectbox(
                 "Building Typology",
-                [
-                    "Commercial Innovation Hub",
-                    "Mixed-Use Development",
-                    "Residential Tower",
-                    "Healthcare Facility",
-                    "Education Campus",
-                    "Industrial / Logistics Facility",
-                    "Civic / Institutional Building",
-                ],
-                index=[
-                    "Commercial Innovation Hub",
-                    "Mixed-Use Development",
-                    "Residential Tower",
-                    "Healthcare Facility",
-                    "Education Campus",
-                    "Industrial / Logistics Facility",
-                    "Civic / Institutional Building",
-                ].index(p.get("typology", "Commercial Innovation Hub")),
+                typologies,
+                index=typologies.index(current_typology) if current_typology in typologies else 0,
             )
         with c3:
             p["delivery_method"] = st.selectbox(
@@ -46,7 +40,7 @@ def render() -> None:
                 index=1,
             )
 
-    st.markdown("### 📐 Core Project Parameters")
+    st.markdown("### Core Project Parameters")
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         p["site_area"] = st.number_input("Site Area (m²)", min_value=100.0, value=float(p.get("site_area", 2500.0)), step=100.0)
@@ -66,11 +60,25 @@ def render() -> None:
     m3.metric("Indicative CAPEX", f"${p['estimated_cost']:,.0f}")
     m4.metric("Design Grid", f"{p['grid_spacing']:.1f} × {p['grid_spacing']:.1f} m")
 
-    st.markdown("### 🎯 Performance Brief")
+    st.markdown("### Performance Brief")
     c1, c2, c3 = st.columns(3)
     with c1:
-        p["energy_target"] = st.selectbox("Energy Target", ["Conventional", "High Performance", "Net-Zero Ready", "Net-Zero Carbon"], index=2)
+        energy_targets = ["Conventional", "High Performance", "Net-Zero Ready", "Net-Zero Carbon"]
+        current_energy = p.get("energy_target", "Net-Zero Ready")
+        p["energy_target"] = st.selectbox(
+            "Energy Target",
+            energy_targets,
+            index=energy_targets.index(current_energy) if current_energy in energy_targets else 2,
+        )
     with c2:
         p["carbon_target"] = st.number_input("Embodied Carbon Target (kgCO₂e/m²)", min_value=50.0, max_value=1200.0, value=float(p.get("carbon_target", 420.0)), step=10.0)
     with c3:
-        p["code_basis"] = st.selectbox("Primary Code Basis", ["International / IBC", "Eurocodes", "BS Standards", "Local Authority / National Code"], index=0)
+        code_bases = ["International / IBC", "Eurocodes", "BS Standards", "Local Authority / National Code"]
+        current_code = p.get("code_basis", "International / IBC")
+        p["code_basis"] = st.selectbox(
+            "Primary Code Basis",
+            code_bases,
+            index=code_bases.index(current_code) if current_code in code_bases else 0,
+        )
+
+    st.session_state.project = p
