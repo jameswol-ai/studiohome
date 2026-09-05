@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from modules.design_state import build_design_state
+from modules.design_state import build_design_state, get_program_schedule
 
 BLACK = "#111111"
 RED = "#D40000"
@@ -22,7 +22,7 @@ def _box(fig, x0, y0, z0, x1, y1, z1, *, name, color=GREY, opacity=0.25):
     x = [x0, x1, x1, x0, x0, x1, x1, x0]
     y = [y0, y0, y1, y1, y0, y0, y1, y1]
     z = [z0, z0, z0, z0, z1, z1, z1, z1]
-    faces = [(0, 1, 2), (0, 2, 3), (4, 6, 5), (4, 7, 6), (0, 4, 5), (0, 5, 1), (1, 5, 6), (1, 6, 7), (2, 6, 7), (2, 7, 3), (3, 7, 4), (3, 4, 0)]
+    faces = [(0, 1, 2), (0, 2, 3), (4, 6, 5), (4, 7, 6), (0, 4, 5), (0, 5, 1), (1, 5, 6), (1, 6, 2), (2, 6, 7), (2, 7, 3), (3, 7, 4), (3, 4, 0)]
     _mesh(fig, x, y, z, faces, name=name, color=color, opacity=opacity)
 
 
@@ -54,7 +54,40 @@ def _core(fig, state, height, gap):
     cw, cd = w * 0.22, d * 0.32
     cx, cy = (w - cw) / 2, (d - cd) / 2
     _box(fig, cx, cy, 0, cx + cw, cy + cd, height + state["floors"] * gap, name="Vertical Core", color=RED, opacity=0.42)
-    _line(fig, [cx, cx + cw], [cy + cd / 2, cy + cd / 2], [height / 2, height / 2], color=RED, width=5)
+
+
+def _program_zones(fig, state, gap, selected_level, show_labels):
+    """Create deterministic program zones from the shared program schedule."""
+    w, d = state["floorplate_width"], state["floorplate_depth"]
+    f2f = state["floor_to_floor"]
+    core_w, core_d = w * 0.22, d * 0.32
+    cx, cy = (w - core_w) / 2, (d - core_d) / 2
+    left_w = max(1.0, cx)
+    right_w = max(1.0, w - (cx + core_w))
+    schedule = get_program_schedule(state)
+    levels = range(state["floors"]) if selected_level == "All Levels" else [int(selected_level.split()[-1]) - 1]
+    palette = ["#DDDDDD", "#EEEEEE", "#BBBBBB", "#999999", "#777777", "#CCCCCC"]
+    for level in levels:
+        z0 = level * (f2f + gap) + 0.22
+        z1 = z0 + f2f - 0.35
+        usable_w = left_w + right_w
+        cursor = 0.0
+        for index, (name, share, area) in enumerate(schedule):
+            zone_w = max(0.9, usable_w * float(share))
+            if cursor + zone_w > usable_w:
+                zone_w = usable_w - cursor
+            if zone_w <= 0:
+                continue
+            x0 = cursor if cursor < left_w else cursor + core_w
+            x1 = min(w, x0 + zone_w)
+            if x1 <= x0:
+                continue
+            _box(fig, x0, 0.7, z0, x1, d - 0.7, z1, name=f"{name} | Level {level + 1}", color=palette[index % len(palette)], opacity=0.18)
+            if show_labels:
+                fig.add_trace(go.Scatter3d(x=[(x0 + x1) / 2], y=[d / 2], z=[(z0 + z1) / 2], mode="text", text=[name], textfont=dict(color=BLACK, size=9), hovertext=f"{name}: {area:,.0f} m²", hoverinfo="text", showlegend=False))
+            cursor += zone_w
+            if cursor >= left_w and cursor < left_w + right_w:
+                cursor += core_w
 
 
 def _slabs(fig, state, gap, selected_level):
@@ -108,9 +141,11 @@ def _doors_windows(fig, state, gap):
             _line(fig, [0, 0], [y, y + min(1.0, d * 0.05)], [z, z], color=RED, width=5)
 
 
-def _figure(state, *, show_facade, show_structure, show_grid, show_core, show_slabs, show_mep, show_stairs, show_openings, opacity, explode, selected_level):
+def _figure(state, *, show_facade, show_structure, show_grid, show_core, show_slabs, show_mep, show_stairs, show_openings, show_program, show_labels, opacity, explode, selected_level):
     fig = go.Figure()
     gap = explode * state["floor_to_floor"]
+    if show_program:
+        _program_zones(fig, state, gap, selected_level, show_labels)
     if show_facade:
         _facade(fig, state, opacity, gap)
     if show_slabs:
@@ -130,26 +165,18 @@ def _figure(state, *, show_facade, show_structure, show_grid, show_core, show_sl
         _stairs(fig, state, gap)
     if show_openings:
         _doors_windows(fig, state, gap)
-    fig.update_layout(
-        title=f"3D BIM Coordination Model | {state['typology']} | {state['floors']} Storeys",
-        paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF", font=dict(color=BLACK), height=780,
-        margin=dict(l=0, r=0, t=55, b=0), showlegend=False,
-        scene=dict(bgcolor="#FFFFFF", aspectmode="data",
-                   xaxis=dict(title="Width (m)", color=BLACK, gridcolor="#DDDDDD"),
-                   yaxis=dict(title="Depth (m)", color=BLACK, gridcolor="#DDDDDD"),
-                   zaxis=dict(title="Elevation (m)", color=BLACK, gridcolor="#DDDDDD")),
-    )
+    fig.update_layout(title=f"3D BIM Design Model | {state['typology']} | {state['floors']} Storeys", paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF", font=dict(color=BLACK), height=800, margin=dict(l=0, r=0, t=55, b=0), showlegend=False, scene=dict(bgcolor="#FFFFFF", aspectmode="data", xaxis=dict(title="Width (m)", color=BLACK, gridcolor="#DDDDDD"), yaxis=dict(title="Depth (m)", color=BLACK, gridcolor="#DDDDDD"), zaxis=dict(title="Elevation (m)", color=BLACK, gridcolor="#DDDDDD")))
     return fig
 
 
 def render():
     st.markdown("## 3D Design Studio")
-    st.markdown("BIM-style interactive coordination viewer for architecture, structure and building systems.")
+    st.markdown("Program-driven BIM-style coordination viewer for architecture, structure and building systems.")
     project = st.session_state.project
     state = build_design_state(project)
     project.update(state)
 
-    st.markdown("### Discipline Visibility")
+    st.markdown("### Discipline and BIM Visibility")
     c1, c2, c3, c4 = st.columns(4)
     show_facade = c1.checkbox("Architecture / Facade", True)
     show_structure = c2.checkbox("Structure / Columns", True)
@@ -160,6 +187,9 @@ def render():
     show_stairs = c6.checkbox("Stairs", True)
     show_openings = c7.checkbox("Doors / Windows", True)
     show_grid = c8.checkbox("Structural Grid", True)
+    c9, c10 = st.columns(2)
+    show_program = c9.checkbox("Program Zones", True)
+    show_labels = c10.checkbox("Room / Zone Labels", True)
 
     c1, c2, c3 = st.columns(3)
     opacity = c1.slider("Envelope Transparency", 0.05, 0.70, 0.20, 0.02)
@@ -168,30 +198,19 @@ def render():
     selected_level = c3.selectbox("Level Focus", levels)
 
     camera_name = st.selectbox("Camera", ["Isometric", "Top", "Front", "Side"])
-    cameras = {
-        "Isometric": dict(eye=dict(x=1.55, y=1.55, z=1.25)),
-        "Top": dict(eye=dict(x=0.01, y=0.01, z=2.6)),
-        "Front": dict(eye=dict(x=0.01, y=2.8, z=1.0)),
-        "Side": dict(eye=dict(x=2.8, y=0.01, z=1.0)),
-    }
-    fig = _figure(state, show_facade=show_facade, show_structure=show_structure, show_grid=show_grid, show_core=show_core, show_slabs=show_slabs, show_mep=show_mep, show_stairs=show_stairs, show_openings=show_openings, opacity=opacity, explode=explode, selected_level=selected_level)
+    cameras = {"Isometric": dict(eye=dict(x=1.55, y=1.55, z=1.25)), "Top": dict(eye=dict(x=0.01, y=0.01, z=2.6)), "Front": dict(eye=dict(x=0.01, y=2.8, z=1.0)), "Side": dict(eye=dict(x=2.8, y=0.01, z=1.0))}
+    fig = _figure(state, show_facade=show_facade, show_structure=show_structure, show_grid=show_grid, show_core=show_core, show_slabs=show_slabs, show_mep=show_mep, show_stairs=show_stairs, show_openings=show_openings, show_program=show_program, show_labels=show_labels, opacity=opacity, explode=explode, selected_level=selected_level)
     fig.update_layout(scene_camera=cameras[camera_name])
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": True, "scrollZoom": True})
 
-    metrics = [
-        ["Floorplate", f"{state['floorplate_width']:.1f} x {state['floorplate_depth']:.1f} m"],
-        ["Building height", f"{state['building_height']:.1f} m"],
-        ["Storeys", state["floors"]],
-        ["GFA", f"{state['total_gfa']:,.0f} m²"],
-        ["Footprint", f"{state['footprint_area']:,.0f} m²"],
-        ["Structural grid", f"{state['grid_bays_x']} x {state['grid_bays_y']} bays"],
-        ["Core area", f"{state['core_area']:,.0f} m²"],
-        ["Envelope area", f"{state['envelope_area']:,.0f} m²"],
-    ]
-    st.markdown("### Coordinated Model Quantities")
-    st.dataframe(pd.DataFrame(metrics, columns=["Parameter", "Value"]), use_container_width=True, hide_index=True)
+    schedule = get_program_schedule(state)
+    schedule_df = pd.DataFrame([[name, share * 100, area] for name, share, area in schedule], columns=["Program Zone", "Share (%)", "Area (m²)"])
+    st.markdown("### Program-Driven BIM Schedule")
+    st.dataframe(schedule_df, use_container_width=True, hide_index=True)
 
-    st.markdown("### Model Coordination Status")
+    st.markdown("### Coordinated Model Quantities")
+    quantities = [["Floorplate", f"{state['floorplate_width']:.1f} x {state['floorplate_depth']:.1f} m"], ["Building height", f"{state['building_height']:.1f} m"], ["Storeys", state["floors"]], ["GFA", f"{state['total_gfa']:,.0f} m²"], ["Footprint", f"{state['footprint_area']:,.0f} m²"], ["Structural grid", f"{state['grid_bays_x']} x {state['grid_bays_y']} bays"], ["Core area", f"{state['core_area']:,.0f} m²"], ["Envelope area", f"{state['envelope_area']:,.0f} m²"]]
+    st.dataframe(pd.DataFrame(quantities, columns=["Parameter", "Value"]), use_container_width=True, hide_index=True)
     st.success("3D model synchronized with the shared parametric project state.")
-    st.caption("The model is a conceptual coordination representation. Engineering calculations remain subject to discipline-specific analysis and code verification.")
+    st.caption("Conceptual coordination representation. Discipline-specific engineering calculations remain subject to detailed analysis and code verification.")
     st.session_state.project = project
