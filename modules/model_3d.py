@@ -1,8 +1,7 @@
-"""Interactive 3D parametric building design studio."""
+"""Interactive BIM-style 3D parametric building design studio."""
 from __future__ import annotations
 
-import math
-
+import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
@@ -11,126 +10,188 @@ from modules.design_state import build_design_state
 BLACK = "#111111"
 RED = "#D40000"
 GREY = "#777777"
+LIGHT = "#CCCCCC"
 
 
-def _cuboid(fig: go.Figure, x0: float, y0: float, z0: float, x1: float, y1: float, z1: float, *, name: str, opacity: float = 0.28, color: str = BLACK) -> None:
+def _mesh(fig, x, y, z, faces, *, name, color=GREY, opacity=0.25):
+    i, j, k = zip(*faces)
+    fig.add_trace(go.Mesh3d(x=x, y=y, z=z, i=i, j=j, k=k, color=color, opacity=opacity, flatshading=True, hovertext=name, hoverinfo="text", showlegend=False))
+
+
+def _box(fig, x0, y0, z0, x1, y1, z1, *, name, color=GREY, opacity=0.25):
     x = [x0, x1, x1, x0, x0, x1, x1, x0]
     y = [y0, y0, y1, y1, y0, y0, y1, y1]
     z = [z0, z0, z0, z0, z1, z1, z1, z1]
-    faces = [(0, 1, 2), (0, 2, 3), (4, 6, 5), (4, 7, 6), (0, 4, 5), (0, 5, 1), (1, 5, 6), (1, 6, 2), (2, 6, 7), (2, 7, 3), (3, 7, 4), (3, 4, 0)]
-    i, j, k = zip(*faces)
-    fig.add_trace(go.Mesh3d(x=x, y=y, z=z, i=i, j=j, k=k, color=color, opacity=opacity, name=name, flatshading=True, hovertext=name, hoverinfo="text", showlegend=False))
+    faces = [(0, 1, 2), (0, 2, 3), (4, 6, 5), (4, 7, 6), (0, 4, 5), (0, 5, 1), (1, 5, 6), (1, 6, 7), (2, 6, 7), (2, 7, 3), (3, 7, 4), (3, 4, 0)]
+    _mesh(fig, x, y, z, faces, name=name, color=color, opacity=opacity)
 
 
-def _line(fig: go.Figure, xs, ys, zs, *, color=BLACK, width=3, name="") -> None:
-    fig.add_trace(go.Scatter3d(x=list(xs), y=list(ys), z=list(zs), mode="lines", line=dict(color=color, width=width), name=name, hoverinfo="skip", showlegend=False))
+def _line(fig, xs, ys, zs, *, color=BLACK, width=3):
+    fig.add_trace(go.Scatter3d(x=list(xs), y=list(ys), z=list(zs), mode="lines", line=dict(color=color, width=width), hoverinfo="skip", showlegend=False))
 
 
-def _building_figure(state: dict, show_grid: bool, show_structure: bool, show_core: bool, show_floorplates: bool, facade_opacity: float, explode: float) -> go.Figure:
-    width = state["floorplate_width"]
-    depth = state["floorplate_depth"]
-    floors = state["floors"]
+def _structural_grid(fig, state, z):
+    w, d = state["floorplate_width"], state["floorplate_depth"]
+    for i in range(state["grid_bays_x"] + 1):
+        x = min(w, i * state["actual_grid_spacing_x"])
+        _line(fig, [x, x], [0, d], [z, z], color=GREY, width=1)
+    for i in range(state["grid_bays_y"] + 1):
+        y = min(d, i * state["actual_grid_spacing_y"])
+        _line(fig, [0, w], [y, y], [z, z], color=GREY, width=1)
+
+
+def _columns(fig, state, z0, z1):
+    w, d = state["floorplate_width"], state["floorplate_depth"]
+    for i in range(state["grid_bays_x"] + 1):
+        x = min(w, i * state["actual_grid_spacing_x"])
+        for j in range(state["grid_bays_y"] + 1):
+            y = min(d, j * state["actual_grid_spacing_y"])
+            _line(fig, [x, x], [y, y], [z0, z1], color=BLACK, width=2)
+
+
+def _core(fig, state, height, gap):
+    w, d = state["floorplate_width"], state["floorplate_depth"]
+    cw, cd = w * 0.22, d * 0.32
+    cx, cy = (w - cw) / 2, (d - cd) / 2
+    _box(fig, cx, cy, 0, cx + cw, cy + cd, height + state["floors"] * gap, name="Vertical Core", color=RED, opacity=0.42)
+    _line(fig, [cx, cx + cw], [cy + cd / 2, cy + cd / 2], [height / 2, height / 2], color=RED, width=5)
+
+
+def _slabs(fig, state, gap, selected_level):
+    w, d = state["floorplate_width"], state["floorplate_depth"]
     f2f = state["floor_to_floor"]
-    height = state["building_height"]
-    gap = explode * f2f
-    fig = go.Figure()
+    levels = range(state["floors"]) if selected_level == "All Levels" else [max(1, int(selected_level.split()[-1])) - 1]
+    for level in levels:
+        z = level * (f2f + gap)
+        _box(fig, 0, 0, z, w, d, z + 0.16, name=f"Slab Level {level + 1}", color=BLACK, opacity=0.30)
 
-    for level in range(floors):
+
+def _facade(fig, state, opacity, gap):
+    w, d, h = state["floorplate_width"], state["floorplate_depth"], state["building_height"] + state["floors"] * gap
+    _box(fig, 0, 0, 0, w, d, h, name="Building Envelope", color=LIGHT, opacity=opacity)
+    wwr = state["window_wall_ratio"]
+    band = max(0.4, min(1.4, wwr * 2.0))
+    for level in range(state["floors"]):
+        z = level * (state["floor_to_floor"] + gap) + state["floor_to_floor"] * 0.35
+        for x in [w * 0.15, w * 0.35, w * 0.55, w * 0.75]:
+            _line(fig, [x, min(w, x + band)], [0, 0], [z, z], color=RED, width=4)
+            _line(fig, [x, min(w, x + band)], [d, d], [z, z], color=RED, width=4)
+
+
+def _mep(fig, state, gap):
+    w, d = state["floorplate_width"], state["floorplate_depth"]
+    for level in range(state["floors"]):
+        z = level * (state["floor_to_floor"] + gap) + state["floor_to_floor"] * 0.72
+        _line(fig, [w * 0.20, w * 0.80], [d * 0.50, d * 0.50], [z, z], color=RED, width=5)
+        _line(fig, [w * 0.50, w * 0.50], [d * 0.20, d * 0.80], [z, z], color=RED, width=4)
+
+
+def _stairs(fig, state, gap):
+    w, d = state["floorplate_width"], state["floorplate_depth"]
+    f2f = state["floor_to_floor"]
+    x0, y0 = w * 0.10, d * 0.12
+    for level in range(state["floors"] - 1):
         z0 = level * (f2f + gap)
-        z1 = z0 + f2f
-        _cuboid(fig, 0, 0, z0, width, depth, z1, name=f"Level {level + 1}", opacity=facade_opacity, color=GREY)
-        if show_floorplates:
-            _line(fig, [0, width, width, 0, 0], [0, 0, depth, depth, 0], [z0, z0, z0, z0, z0], color=BLACK, width=2)
-        if show_grid:
-            for i in range(1, state["grid_bays_x"]):
-                x = i * state["actual_grid_spacing_x"]
-                _line(fig, [x, x], [0, depth], [z0, z0], color=GREY, width=1)
-            for i in range(1, state["grid_bays_y"]):
-                y = i * state["actual_grid_spacing_y"]
-                _line(fig, [0, width], [y, y], [z0, z0], color=GREY, width=1)
-        if show_structure:
-            for i in range(state["grid_bays_x"] + 1):
-                x = min(width, i * state["actual_grid_spacing_x"])
-                for j in range(state["grid_bays_y"] + 1):
-                    y = min(depth, j * state["actual_grid_spacing_y"])
-                    _line(fig, [x, x], [y, y], [z0, z1], color=BLACK, width=2)
+        for step in range(8):
+            z = z0 + f2f * (step + 1) / 9
+            _line(fig, [x0, x0 + w * 0.12], [y0 + step * 0.15, y0 + step * 0.15], [z, z], color=BLACK, width=2)
 
+
+def _doors_windows(fig, state, gap):
+    w, d = state["floorplate_width"], state["floorplate_depth"]
+    f2f = state["floor_to_floor"]
+    for level in range(state["floors"]):
+        z = level * (f2f + gap) + f2f * 0.45
+        for x in [w * 0.30, w * 0.50, w * 0.70]:
+            _line(fig, [x, x + min(1.0, w * 0.025)], [0, 0], [z, z], color=BLACK, width=7)
+        for y in [d * 0.20, d * 0.50, d * 0.80]:
+            _line(fig, [0, 0], [y, y + min(1.0, d * 0.05)], [z, z], color=RED, width=5)
+
+
+def _figure(state, *, show_facade, show_structure, show_grid, show_core, show_slabs, show_mep, show_stairs, show_openings, opacity, explode, selected_level):
+    fig = go.Figure()
+    gap = explode * state["floor_to_floor"]
+    if show_facade:
+        _facade(fig, state, opacity, gap)
+    if show_slabs:
+        _slabs(fig, state, gap, selected_level)
+    if show_grid:
+        for level in range(state["floors"]):
+            _structural_grid(fig, state, level * (state["floor_to_floor"] + gap))
+    if show_structure:
+        for level in range(state["floors"]):
+            z0 = level * (state["floor_to_floor"] + gap)
+            _columns(fig, state, z0, z0 + state["floor_to_floor"])
     if show_core:
-        core_w = width * 0.22
-        core_d = depth * 0.32
-        cx = (width - core_w) / 2
-        cy = (depth - core_d) / 2
-        _cuboid(fig, cx, cy, 0, cx + core_w, cy + core_d, height + floors * gap, name="Vertical Core", opacity=0.42, color=RED)
-
+        _core(fig, state, state["building_height"], gap)
+    if show_mep:
+        _mep(fig, state, gap)
+    if show_stairs:
+        _stairs(fig, state, gap)
+    if show_openings:
+        _doors_windows(fig, state, gap)
     fig.update_layout(
-        title=f"3D Parametric Building Model | {state['design_family']} | {floors} Storeys",
-        paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF", font=dict(color=BLACK), height=760,
+        title=f"3D BIM Coordination Model | {state['typology']} | {state['floors']} Storeys",
+        paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF", font=dict(color=BLACK), height=780,
         margin=dict(l=0, r=0, t=55, b=0), showlegend=False,
-        scene=dict(
-            bgcolor="#FFFFFF", aspectmode="data",
-            xaxis=dict(title="Width (m)", backgroundcolor="#FFFFFF", gridcolor="#DDDDDD", color=BLACK),
-            yaxis=dict(title="Depth (m)", backgroundcolor="#FFFFFF", gridcolor="#DDDDDD", color=BLACK),
-            zaxis=dict(title="Height (m)", backgroundcolor="#FFFFFF", gridcolor="#DDDDDD", color=BLACK),
-            camera=dict(eye=dict(x=1.55, y=1.55, z=1.25)),
-        ),
+        scene=dict(bgcolor="#FFFFFF", aspectmode="data",
+                   xaxis=dict(title="Width (m)", color=BLACK, gridcolor="#DDDDDD"),
+                   yaxis=dict(title="Depth (m)", color=BLACK, gridcolor="#DDDDDD"),
+                   zaxis=dict(title="Elevation (m)", color=BLACK, gridcolor="#DDDDDD")),
     )
     return fig
 
 
 def render():
     st.markdown("## 3D Design Studio")
-    st.markdown("Interactive parametric building model synchronized with the master design state.")
+    st.markdown("BIM-style interactive coordination viewer for architecture, structure and building systems.")
     project = st.session_state.project
     state = build_design_state(project)
     project.update(state)
 
+    st.markdown("### Discipline Visibility")
     c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        facade_opacity = st.slider("Facade Transparency", 0.08, 0.65, 0.24, 0.02)
-    with c2:
-        explode = st.slider("Floor Explode", 0.0, 0.50, 0.0, 0.02)
-    with c3:
-        show_grid = st.checkbox("Show Structural Grid", value=True)
-    with c4:
-        show_structure = st.checkbox("Show Structure", value=True)
-
+    show_facade = c1.checkbox("Architecture / Facade", True)
+    show_structure = c2.checkbox("Structure / Columns", True)
+    show_core = c3.checkbox("Core", True)
+    show_slabs = c4.checkbox("Slabs", True)
     c5, c6, c7, c8 = st.columns(4)
-    with c5:
-        show_core = st.checkbox("Show Core", value=True)
-    with c6:
-        show_floorplates = st.checkbox("Show Floorplates", value=True)
-    with c7:
-        view = st.selectbox("Camera", ["Isometric", "Top", "Front", "Side"])
-    with c8:
-        if st.button("Sync 3D Model", use_container_width=True):
-            state = build_design_state(project)
-            project.update(state)
-            st.session_state.project = project
-            st.rerun()
+    show_mep = c5.checkbox("MEP Routes", True)
+    show_stairs = c6.checkbox("Stairs", True)
+    show_openings = c7.checkbox("Doors / Windows", True)
+    show_grid = c8.checkbox("Structural Grid", True)
 
-    if view == "Top": camera = dict(eye=dict(x=0.01, y=0.01, z=2.4))
-    elif view == "Front": camera = dict(eye=dict(x=0.01, y=2.8, z=1.0))
-    elif view == "Side": camera = dict(eye=dict(x=2.8, y=0.01, z=1.0))
-    else: camera = dict(eye=dict(x=1.55, y=1.55, z=1.25))
+    c1, c2, c3 = st.columns(3)
+    opacity = c1.slider("Envelope Transparency", 0.05, 0.70, 0.20, 0.02)
+    explode = c2.slider("Level Separation", 0.0, 0.50, 0.0, 0.02)
+    levels = ["All Levels"] + [f"Level {i}" for i in range(1, state["floors"] + 1)]
+    selected_level = c3.selectbox("Level Focus", levels)
 
-    fig = _building_figure(state, show_grid, show_structure, show_core, show_floorplates, facade_opacity, explode)
-    fig.update_layout(scene_camera=camera)
+    camera_name = st.selectbox("Camera", ["Isometric", "Top", "Front", "Side"])
+    cameras = {
+        "Isometric": dict(eye=dict(x=1.55, y=1.55, z=1.25)),
+        "Top": dict(eye=dict(x=0.01, y=0.01, z=2.6)),
+        "Front": dict(eye=dict(x=0.01, y=2.8, z=1.0)),
+        "Side": dict(eye=dict(x=2.8, y=0.01, z=1.0)),
+    }
+    fig = _figure(state, show_facade=show_facade, show_structure=show_structure, show_grid=show_grid, show_core=show_core, show_slabs=show_slabs, show_mep=show_mep, show_stairs=show_stairs, show_openings=show_openings, opacity=opacity, explode=explode, selected_level=selected_level)
+    fig.update_layout(scene_camera=cameras[camera_name])
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": True, "scrollZoom": True})
 
-    m1, m2, m3, m4, m5, m6 = st.columns(6)
-    m1.metric("Width", f"{state['floorplate_width']:.1f} m")
-    m2.metric("Depth", f"{state['floorplate_depth']:.1f} m")
-    m3.metric("Height", f"{state['building_height']:.1f} m")
-    m4.metric("GFA", f"{state['total_gfa']:,.0f} m²")
-    m5.metric("Grid", f"{state['grid_bays_x']} x {state['grid_bays_y']}")
-    m6.metric("FAR", f"{state['far']:.2f}")
+    metrics = [
+        ["Floorplate", f"{state['floorplate_width']:.1f} x {state['floorplate_depth']:.1f} m"],
+        ["Building height", f"{state['building_height']:.1f} m"],
+        ["Storeys", state["floors"]],
+        ["GFA", f"{state['total_gfa']:,.0f} m²"],
+        ["Footprint", f"{state['footprint_area']:,.0f} m²"],
+        ["Structural grid", f"{state['grid_bays_x']} x {state['grid_bays_y']} bays"],
+        ["Core area", f"{state['core_area']:,.0f} m²"],
+        ["Envelope area", f"{state['envelope_area']:,.0f} m²"],
+    ]
+    st.markdown("### Coordinated Model Quantities")
+    st.dataframe(pd.DataFrame(metrics, columns=["Parameter", "Value"]), use_container_width=True, hide_index=True)
 
-    st.markdown("### 3D Coordination Data")
-    st.dataframe(
-        __import__("pandas").DataFrame([
-            ["Building family", state["design_family"]], ["Typology", state["typology"]], ["Storeys", state["floors"]],
-            ["Floor-to-floor", f"{state['floor_to_floor']:.2f} m"], ["Footprint", f"{state['footprint_area']:,.1f} m²"],
-            ["Core area", f"{state['core_area']:,.1f} m²"], ["Envelope", f"{state['envelope_area']:,.1f} m²"],
-        ], columns=["Parameter", "Coordinated Value"]), use_container_width=True, hide_index=True
-    )
+    st.markdown("### Model Coordination Status")
+    st.success("3D model synchronized with the shared parametric project state.")
+    st.caption("The model is a conceptual coordination representation. Engineering calculations remain subject to discipline-specific analysis and code verification.")
     st.session_state.project = project
