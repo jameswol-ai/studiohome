@@ -7,7 +7,7 @@ from rl_engine import RLCityEngine
 from modules.registry import build_categories, build_module_mapping, get_render_function
 from modules.routing import validate_quick_action_route
 
-st.set_page_config(page_title="studiohome | AEC + MEP Design Studio", page_icon="🏛️", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="studiohome | AEC + MEP Design Studio", page_icon=None, layout="wide", initial_sidebar_state="expanded")
 
 if "rl_engine" not in st.session_state: st.session_state.rl_engine=RLCityEngine()
 if "project" not in st.session_state:
@@ -79,29 +79,29 @@ with st.sidebar:
 
 def route_cockpit_action(action):
     valid,destination,error=validate_quick_action_route(action,module_mapping,flat_tab_labels)
-    if not valid: st.error(f"🚨 Quick-action routing error: {error}"); return
+    if not valid: st.error(f"Quick-action routing error: {error}"); return
     st.session_state.active_tab=destination; st.session_state.module_category=get_category_for_tab(destination); st.session_state.tab_radio=destination; st.rerun()
 
 def render_executive_cockpit():
     project=st.session_state.project
-    st.markdown("# 🏛️ studiohome | AEC + MEP Executive Cockpit")
+    st.markdown("# studiohome | AEC + MEP Executive Cockpit")
     st.caption("Integrated Architecture, Engineering, Construction, Mechanical, Electrical and Plumbing design coordination workspace.")
     st.markdown('<div class="glass-card">',unsafe_allow_html=True)
     c1,c2,c3,c4,c5=st.columns(5); c1.metric("Project",project.get("project_name","AEC Project")); c2.metric("GFA",f"{project.get('total_gfa',0):,.0f} m²"); c3.metric("CAPEX",f"${project.get('estimated_cost',0):,.0f}"); c4.metric("Storeys",str(project.get("floors",0))); c5.metric("Design Status","Coordinated","Live")
-    st.markdown("### 🧩 Multidisciplinary Design Readiness")
+    st.markdown("### Multidisciplinary Design Readiness")
     df=pd.DataFrame({"Discipline":["Architecture","Structure","Civil","Mechanical","Electrical","Plumbing / Fire","BIM / Export","Cost"],"Readiness (%)":[94,96,89,91,90,88,92,93]})
     fig=px.bar(df,x="Discipline",y="Readiness (%)",color_discrete_sequence=["#E00000"],range_y=[75,100],template="plotly_dark",height=340); fig.update_layout(paper_bgcolor="#050505",plot_bgcolor="#050505",margin=dict(t=30,b=10,l=10,r=10)); st.plotly_chart(fig,use_container_width=True)
-    st.markdown("### ⚡ Design Coordination Shortcuts")
+    st.markdown("### Design Coordination Shortcuts")
     b1,b2,b3,b4=st.columns(4)
     with b1:
-        if st.button("🧭 Project Setup",use_container_width=True,key="cockpit_project"): route_cockpit_action("project_setup")
+        if st.button("Project Setup",use_container_width=True,key="cockpit_project"): route_cockpit_action("project_setup")
     with b2:
-        if st.button("🏗️ Architecture",use_container_width=True,key="cockpit_arch"): route_cockpit_action("architecture_design")
+        if st.button("Architecture",use_container_width=True,key="cockpit_arch"): route_cockpit_action("architecture_design")
     with b3:
-        if st.button("⚡ MEP + Electrical",use_container_width=True,key="cockpit_mep"): route_cockpit_action("mep_design")
+        if st.button("MEP + Electrical",use_container_width=True,key="cockpit_mep"): route_cockpit_action("mep_design")
     with b4:
-        if st.button("📐 Drawing Studio",use_container_width=True,key="cockpit_drawing"): route_cockpit_action("drawing_studio")
-    st.markdown("### 🏢 AEC Delivery Stack")
+        if st.button("Drawing Studio",use_container_width=True,key="cockpit_drawing"): route_cockpit_action("drawing_studio")
+    st.markdown("### AEC Delivery Stack")
     st.info("Brief → Site → Architecture → Floorplates → Drawing Studio → Massing → Envelope → Structure → Civil → Mechanical → Electrical → Plumbing & Fire → Cost → Simulation → BIM / Documentation")
     st.markdown("</div>",unsafe_allow_html=True)
 
